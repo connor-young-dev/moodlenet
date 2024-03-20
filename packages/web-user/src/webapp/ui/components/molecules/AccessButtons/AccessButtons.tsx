@@ -19,7 +19,7 @@ export const SignupHeaderButton: FC<{ signupHref: Href }> = ({ signupHref }) => 
   <Link href={signupHref} key="signup-button" className="signup-button access-button">
     <TertiaryButton>
       {/* <Trans> */}
-      Sign up
+      Join now
       {/* </Trans> */}
     </TertiaryButton>
   </Link>

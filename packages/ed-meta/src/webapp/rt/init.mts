@@ -24,9 +24,7 @@ registerMainAppPluginHook(function useMainAppContext() {
   return mainAppPlugin
 })
 
-SearchPagePlugin.register(() => {
-  return {
-    searchEntitySections: SearchSubjectSectionAddon,
-    wrappers: SearchSubjectWrapperAddon,
-  }
+SearchPagePlugin.register(({ useSearchEntitySections, useWrappers }) => {
+  useSearchEntitySections(SearchSubjectSectionAddon)
+  useWrappers(SearchSubjectWrapperAddon)
 })

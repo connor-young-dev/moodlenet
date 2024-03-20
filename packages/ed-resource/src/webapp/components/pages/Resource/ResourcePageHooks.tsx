@@ -1,11 +1,10 @@
-import { type AddonItem, type AddonItemNoKey } from '@moodlenet/component-library'
+import { getLicenseNode, type AddonItem, type AddonItemNoKey } from '@moodlenet/component-library'
 import type { AddOnMap } from '@moodlenet/core/lib'
 import { EdMetaContext } from '@moodlenet/ed-meta/webapp'
 import { createPlugin, useMainLayoutProps } from '@moodlenet/react-app/webapp'
 import moment from 'moment'
 import { useContext, useMemo } from 'react'
-import { MainContext } from '../../../MainContext.js'
-import type { ResourceCommonProps } from '../../../ResourceHooks.js'
+import { maxUploadSize } from '../../../../common/validationSchema.mjs'
 import { useResourceBaseProps } from '../../../ResourceHooks.js'
 import type { MainResourceCardSlots } from '../../organisms/MainResourceCard/MainResourceCard.js'
 import type { ResourceProps } from './Resource.js'
@@ -20,19 +19,17 @@ export const ResourcePagePlugins = createPlugin<
   {
     resourceKey: string
     info: null | undefined | { name: string; isCreator: boolean }
-    resourceCommonProps: null | undefined | ResourceCommonProps
   }
 >()
 
-export type ResourcePageHookArg = {
+type ResourcePageHookArg = {
   resourceKey: string
 }
-export type ProxiedResourceProps = Omit<ResourceProps, 'isEditingAtStart'>
+
 export const useResourcePageProps = ({ resourceKey }: ResourcePageHookArg) => {
-  const { configs, validationSchemas } = useContext(MainContext)
   const mainLayoutProps = useMainLayoutProps()
   const resourceCommonProps = useResourceBaseProps({ resourceKey })
-  const isCreating = resourceKey === '.'
+
   const info = useMemo(
     () =>
       resourceCommonProps && {
@@ -45,20 +42,19 @@ export const useResourcePageProps = ({ resourceKey }: ResourcePageHookArg) => {
   const plugins = ResourcePagePlugins.usePluginHooks({
     resourceKey,
     info,
-    resourceCommonProps,
   })
 
-  const { publishedMetaOptions } = useContext(EdMetaContext)
+  const { publishedMeta } = useContext(EdMetaContext)
 
   if (!resourceCommonProps) return resourceCommonProps
-  const { actions, props, saveState } = resourceCommonProps
+  const { actions, props, isSaving } = resourceCommonProps
   const { data, resourceForm, state, access, contributor } = props
 
   const mainResourceCardSlots: MainResourceCardSlots = {
     mainColumnItems: [],
     headerColumnItems: [],
     topLeftHeaderItems: [],
-    topRightHeaderItems: isCreating ? [] : plugins.getKeyedAddons('topRightHeaderItems'),
+    topRightHeaderItems: plugins.getKeyedAddons('topRightHeaderItems'),
     moreButtonItems: [],
     footerRowItems: [],
     uploadOptionsItems: [],
@@ -73,18 +69,20 @@ export const useResourcePageProps = ({ resourceKey }: ResourcePageHookArg) => {
     rightColumnItems: [],
     extraDetailsItems: [],
   }
-  const resourceProps: ProxiedResourceProps = {
-    saveState,
+  const resourceProps: Omit<ResourceProps, 'isEditingAtStart'> = {
     mainLayoutProps,
     mainResourceCardSlots,
     resourceContributorCardProps: contributor,
     edMetaOptions: {
-      learningOutcomeOptions: publishedMetaOptions.learningOutcomes,
-      languageOptions: publishedMetaOptions.languages,
-      levelOptions: publishedMetaOptions.levels,
-      licenseOptions: publishedMetaOptions.licenses,
-      subjectOptions: publishedMetaOptions.subjects,
-      typeOptions: publishedMetaOptions.types,
+      languageOptions: publishedMeta.languages,
+      levelOptions: publishedMeta.levels,
+      licenseOptions: publishedMeta.licenses.map(({ label, value }) => ({
+        icon: getLicenseNode(value),
+        label,
+        value,
+      })),
+      subjectOptions: publishedMeta.subjects,
+      typeOptions: publishedMeta.types,
       monthOptions: moment
         .months()
         .map((month, index) => ({ label: month, value: `${index + 1}` })),
@@ -95,14 +93,14 @@ export const useResourcePageProps = ({ resourceKey }: ResourcePageHookArg) => {
     },
     ...layoutProps,
 
-    generalActionsItems: isCreating ? [] : plugins.getKeyedAddons('generalAction'),
+    generalActionsItems: plugins.getKeyedAddons('generalAction'),
     data,
     resourceForm,
     state,
     actions,
     access,
-    fileMaxSize: configs.validations.contentMaxUploadSize,
-    validationSchemas,
+    fileMaxSize: maxUploadSize,
+    isSaving,
   }
   return resourceProps
 }

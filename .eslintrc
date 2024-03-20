@@ -7,10 +7,9 @@
     "@typescript-eslint/ban-ts-comment": [
       "error",
       {
-        // "^\\s+ts\\(\\d+\\)\\s+because .+$"
-        "ts-ignore": { "descriptionFormat": "^\\s+because .+$" },
-        "ts-nocheck": { "descriptionFormat": "^\\s+because .+$" },
-        "ts-expect-error": { "descriptionFormat": "^\\s+because .+$" }
+        "ts-ignore": { "descriptionFormat": "^: because .+$" },
+        "ts-nocheck": { "descriptionFormat": "^: because .+$" },
+        "ts-expect-error": { "descriptionFormat": "^: because .+$" }
       }
     ],
     "@typescript-eslint/consistent-type-imports": [

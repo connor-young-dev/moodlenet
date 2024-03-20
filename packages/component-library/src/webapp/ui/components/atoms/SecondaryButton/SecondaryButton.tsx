@@ -10,7 +10,6 @@ export type SecondaryButtonProps = {
   onHoverColor?: 'blue' | 'grey' | 'red' | 'fill-red'
   noHover?: boolean
   children?: ReactNode
-  innerRef?: React.LegacyRef<HTMLElement>
   onClick?(arg0?: unknown): unknown
 } & React.ButtonHTMLAttributes<HTMLButtonElement>
 
@@ -23,7 +22,6 @@ export const SecondaryButton: FC<SecondaryButtonProps> = ({
   disabled,
   onHoverColor,
   noHover,
-  innerRef,
   onClick,
   ...props
 }) => {
@@ -32,7 +30,6 @@ export const SecondaryButton: FC<SecondaryButtonProps> = ({
       className={`secondary-button button ${className} ${color} hover-${onHoverColor} ${
         disabled ? 'disabled' : ''
       }`}
-      ref={innerRef}
       title={abbr}
       tabIndex={!disabled ? 0 : undefined}
       style={{ pointerEvents: noHover ? 'none' : 'unset' }}

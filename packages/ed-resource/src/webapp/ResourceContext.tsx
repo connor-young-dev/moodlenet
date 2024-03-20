@@ -1,30 +1,31 @@
 import type { FC, PropsWithChildren } from 'react'
-import { createContext, useCallback, useMemo } from 'react'
+import { createContext, useCallback, useContext, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CREATE_RESOURCE_PAGE_ROUTE_PATH } from '../common/webapp-routes.mjs'
-import { shell } from './shell.mjs'
+import { getResourceHomePageRoutePath } from '../common/webapp-routes.mjs'
+import { MainContext } from './MainContext.js'
 
 export type ResourceContextT = {
-  createResource(): void
-  rpc: typeof shell.rpc.me
+  createResource(): Promise<{ homePath: string; key: string }>
 }
 export const ResourceContext = createContext<ResourceContextT>(null as any)
 
 export function useResourceContextValue() {
-  // const mainContext = useContext(MainContext)
+  const mainContext = useContext(MainContext)
   const nav = useNavigate()
 
   const createResource = useCallback<ResourceContextT['createResource']>(
-    function create() {
-      nav(CREATE_RESOURCE_PAGE_ROUTE_PATH)
+    async function create(opts?: { noNav?: boolean }) {
+      const { _key } = await mainContext.rpcCaller.create()
+      const homePath = getResourceHomePageRoutePath({ _key, title: 'no-name' })
+      !opts?.noNav && nav(homePath, { state: { editMode: true } })
+      return { homePath, key: _key }
     },
-    [nav],
+    [mainContext.rpcCaller, nav],
   )
 
   const resourceContext = useMemo<ResourceContextT>(() => {
     const resourceContext: ResourceContextT = {
       createResource,
-      rpc: shell.rpc.me,
     }
     return resourceContext
   }, [createResource])

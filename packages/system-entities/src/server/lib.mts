@@ -10,6 +10,7 @@ import {
   creatorEntityIdVar,
   currentEntityClass,
   currentEntityVar,
+  entityIdentifier2EntityIdAql,
   isCurrentUserCreatorOfCurrentEntity,
   toaql,
 } from './aql-lib/aql.mjs'
@@ -33,7 +34,6 @@ import type {
   EntityCollectionHandles,
   EntityDocFullData,
   EntityDocument,
-  EntityFullDocument,
   EntityMetadata,
   PkgUser,
   RootUser,
@@ -141,7 +141,7 @@ export async function canCreateEntity(entityClass: EntityClass<SomeEntityDataTyp
 
 export async function create<EntityDataType extends SomeEntityDataType>(
   entityClass: EntityClass<EntityDataType>,
-  newEntityData: EntityDataType & { _key?: string },
+  newEntityData: EntityDataType & { _key?: never },
   opts?: { pkgCreator?: boolean },
 ) {
   const currentUser = opts?.pkgCreator ? await setPkgCurrentUser() : await getCurrentSystemUser()
@@ -189,7 +189,7 @@ ${JSON.stringify(currentUser, null, 2)}
 export type PatchEntityOpts<
   Project extends AccessEntitiesCustomProject<any>,
   ProjectAccess extends EntityAccess,
-> = AccessEntitiesOpts<Project, ProjectAccess> & { matchRev?: string }
+> = AccessEntitiesOpts<Project, ProjectAccess>
 export async function patchEntity<
   EntityDataType extends SomeEntityDataType,
   Project extends AccessEntitiesCustomProject<any>,
@@ -202,52 +202,16 @@ export async function patchEntity<
 ) {
   const isAqlEntityDataPatch = typeof entityDataPatch === 'string'
   const aqlPatchVar = isAqlEntityDataPatch ? entityDataPatch : toaql(entityDataPatch)
-  const matchRevFilter = opts?.matchRev
-    ? `${currentEntityVar}._rev == ${toaql(opts.matchRev)} && `
-    : ''
-  const now = shell.now().toISOString()
   const patchCursor = await accessEntities(entityClass, 'u', {
     ...opts,
     preAccessBody: `${opts?.preAccessBody ?? ''} 
-    FILTER ${matchRevFilter} ${currentEntityVar}._key == ${toaql(key)} LIMIT 1`,
+    FILTER entity._key == "${key}" LIMIT 1`,
     postAccessBody: `${opts?.postAccessBody ?? ''} 
-    let mergedPatch = MERGE_RECURSIVE(
-        ${currentEntityVar}, 
-        UNSET(${aqlPatchVar}, '_meta'), 
-        { 
-          _meta: { 
-            updated: ${toaql(now)} 
-          } 
-        } 
-      )
-
-    let noChanges = MATCHES( 
-      UNSET( mergedPatch, '_meta' ,'_rev' ), 
-      UNSET( ${currentEntityVar}, '_meta' ,'_rev' )
-    )
-    
-    LET patch = noChanges ? {} : mergedPatch
-
-    UPDATE ${currentEntityVar} WITH patch IN @@collection
-    `,
-    project: {
-      patched: 'NEW' as AqlVal<EntityFullDocument<EntityDataType>>,
-      old: 'OLD' as AqlVal<EntityFullDocument<EntityDataType>>,
-      noChanges: 'noChanges' as AqlVal<boolean>,
-      // ...(opts?.project ?? {}),
-    },
+    UPDATE entity WITH UNSET(${aqlPatchVar}, '_meta') IN @@collection`,
+    project: { patched: 'NEW' as AqlVal<EntityDocument<EntityDataType>> },
   })
-
   const patchRecord = await patchCursor.next()
-  if (!patchRecord) {
-    return
-  }
-  return {
-    patched: patchRecord.patched,
-    old: patchRecord.old,
-    noChanges: patchRecord.noChanges,
-    changed: !patchRecord.noChanges,
-  }
+  return patchRecord
 }
 
 /* export async function patchEntity<EntityDataType extends SomeEntityDataType>(
@@ -327,23 +291,21 @@ export async function getEntity<
   return getRecord
 }
 
-export type QueryEntitiesPageOpts = {
+export type QueryEntitiesOpts<
+  Project extends AccessEntitiesCustomProject<any>,
+  ProjectAccess extends EntityAccess,
+> = AccessEntitiesOpts<Project, ProjectAccess> & {
   skip?: number
   limit?: number
   sort?: string
 }
-export type QueryEntitiesOpts<
-  Project extends AccessEntitiesCustomProject<any>,
-  ProjectAccess extends EntityAccess,
-> = AccessEntitiesOpts<Project, ProjectAccess> & QueryEntitiesPageOpts
 export async function queryEntities<
   EntityDataType extends SomeEntityDataType,
   Project extends AccessEntitiesCustomProject<any>,
   ProjectAccess extends EntityAccess,
 >(entityClass: EntityClass<EntityDataType>, opts?: QueryEntitiesOpts<Project, ProjectAccess>) {
-  const _reqLimit = opts?.limit ?? DEFAULT_QUERY_LIMIT
-  const limit = _reqLimit > DEFAULT_MAX_QUERY_LIMIT ? DEFAULT_MAX_QUERY_LIMIT : _reqLimit
-  const skip = Math.floor(opts?.skip ?? 0)
+  const limit = Math.min(opts?.limit ?? DEFAULT_QUERY_LIMIT, DEFAULT_MAX_QUERY_LIMIT)
+  const skip = opts?.skip ?? 0
   const sort = opts?.sort ? `SORT ${opts.sort}` : ''
   const queryEntitiesCursor = await accessEntities(entityClass, 'r', {
     ...opts,
@@ -559,7 +521,9 @@ FOR entity in @@collection ${opts?.forOptions ?? ''}
 
 ${opts?.viaSearchView ? `FILTER ${currentEntityClass}==${toaql(entityClass)}` : ``}
 
-LET ${creatorEntityIdVar}=entity._meta.creator.type == 'entity' ? entity._meta.creatorEntityId : null
+LET ${creatorEntityIdVar}=entity._meta.creator.type == 'entity' ? ${entityIdentifier2EntityIdAql(
+    'entity._meta.creator.entityIdentifier',
+  )} : null
 
 LET ${creatorEntityDocVar} = DOCUMENT(${creatorEntityIdVar})
 
@@ -584,7 +548,8 @@ ${projectAqlRawProps}
 `
 
   const bindVars = { '@collection': accessCollectionName, currentUser, ...opts?.bindVars }
-  q.includes('/*DEBUG*/') && console.log(q, JSON.stringify(bindVars))
+  // shell.log('debug', q, JSON.stringify({ bindVars }, null, 2))
+  // console.debug(q)
   // console.debug(JSON.stringify({ bindVars }))
 
   const queryCursor = await db
@@ -592,8 +557,9 @@ ${projectAqlRawProps}
       retryOnConflict: 5,
     })
     .catch(e => {
-      shell.log('error', 'Access Entities', e)
-      console.debug(q, JSON.stringify({ bindVars }))
+      shell.log('error', e)
+      shell.log('debug', q)
+      shell.log('debug', JSON.stringify({ bindVars }))
       throw e
     })
 
@@ -759,20 +725,12 @@ export async function matchRootPassword(matchPassword: string): Promise<boolean>
 }
 
 export async function setPkgCurrentUser() {
-  const currentPkgUser: PkgUser = await getPkgCurrentUser()
-  shell.myAsyncCtx.set(() => ({ type: 'CurrentUserFetchedCtx', currentUser: currentPkgUser }))
-  return currentPkgUser
-}
-export async function setCurrentSystemUser(currentUser: SystemUser) {
-  shell.myAsyncCtx.set(() => ({ type: 'CurrentUserFetchedCtx', currentUser }))
-}
-
-export async function getPkgCurrentUser() {
   const { pkgId } = shell.assertCallInitiator()
   const currentPkgUser: PkgUser = {
     type: 'pkg',
     pkgName: pkgId.name,
   }
+  shell.myAsyncCtx.set(() => ({ type: 'CurrentUserFetchedCtx', currentUser: currentPkgUser }))
   return currentPkgUser
 }
 
@@ -780,23 +738,7 @@ export function registerEntityInfoProvider(providerItem: EntityInfoProviderItem)
   ENTITY_INFO_PROVIDERS.push({ providerItem })
 }
 
-export const createEntityKey = customAlphabet(
+const createEntityKey = customAlphabet(
   `0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz`,
   8,
 )
-
-export function getEntityDoc<DataType extends SomeEntityDataType>(
-  fullEntityDoc: EntityFullDocument<DataType>,
-): EntityDocument<DataType> {
-  const { _meta: _1, ...doc } = fullEntityDoc
-  return doc as any as EntityDocument<DataType>
-}
-
-export async function getCurrentEntityUserIdentifier() {
-  const sysUser = await getCurrentSystemUser()
-  return getEntityUserIdentifier(sysUser)
-}
-
-export async function getEntityUserIdentifier(sysUser: SystemUser) {
-  return sysUser.type === 'entity' ? sysUser.entityIdentifier : null
-}

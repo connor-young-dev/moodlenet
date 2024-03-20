@@ -4,10 +4,7 @@ import type { FC, PropsWithChildren } from 'react'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import type { Profile } from '../../../common/exports.mjs'
-import {
-  SESSION_CHANGE_REDIRECT_Q_NAME,
-  WEB_USER_SESSION_TOKEN_COOKIE_NAME,
-} from '../../../common/exports.mjs'
+import { WEB_USER_SESSION_TOKEN_COOKIE_NAME } from '../../../common/exports.mjs'
 import defaultAvatarUrl from '../../ui/assets/img/default-avatar.svg'
 import rootAvatarUrl from '../../ui/assets/img/root-avatar.svg'
 import { shell } from '../shell.mjs'
@@ -24,11 +21,10 @@ export type ClientSessionData = {
   | {
       isAdmin: boolean
       isRoot: false
-      myProfile: Profile & { publisher: boolean; webUserKey: string }
+      myProfile: Profile & { publisher: boolean }
     }
 )
 export type AuthCtxT = {
-  updateMyLocalProfile(patch: Partial<Profile>): void
   logout(): void
   readSessionTokenCookie(): string | undefined
 } & (
@@ -56,32 +52,13 @@ export function useAuthCtxValue() {
   const [clientSessionData, setClientSessionData] = useState<ClientSessionData | null | undefined>(
     null,
   )
-  const updateMyLocalProfile = useCallback((patch: Partial<Profile>) => {
-    setClientSessionData(curr => {
-      const myProfile = curr?.myProfile
-      if (!myProfile) {
-        return curr
-      }
-      return {
-        ...curr,
-        userDisplay: {
-          name: patch.displayName ?? curr.userDisplay.name,
-          avatarUrl: patch.avatarUrl ?? curr.userDisplay.avatarUrl,
-        },
-        myProfile: {
-          ...myProfile,
-          ...patch,
-        },
-      }
-    })
-  }, [])
 
   const logout = useCallback<AuthCtxT['logout']>(() => {
     lastSessionTokenCookie = undefined
     setClientSessionData(undefined)
     deleteSessionTokenCookie()
     nav('/')
-  }, [nav])
+  }, [setClientSessionData, nav])
 
   const fetchClientSessionDataRpc = useCallback(async () => {
     return fetch().then(_ => {
@@ -92,7 +69,7 @@ export function useAuthCtxValue() {
         return
       }
 
-      const sessionDataRpc = await shell.rpc.me('getCurrentClientSessionDataRpc')()
+      const sessionDataRpc = await shell.rpc.me.getCurrentClientSessionDataRpc()
 
       if (!sessionDataRpc) {
         return
@@ -123,10 +100,7 @@ export function useAuthCtxValue() {
   useEffect(() => {
     sessionTokenCookieChanged = () => {
       fetchClientSessionDataRpc().finally(() => {
-        const redirectTo = new URLSearchParams(loc.search).get(SESSION_CHANGE_REDIRECT_Q_NAME)
-        if (redirectTo === '.') {
-          return
-        }
+        const redirectTo = new URLSearchParams(loc.search).get(REDIRECT_Q_NAME)
         nav(redirectTo || '/')
       })
     }
@@ -138,7 +112,6 @@ export function useAuthCtxValue() {
     }
 
     const authCtxT: AuthCtxT = {
-      updateMyLocalProfile,
       readSessionTokenCookie,
       logout,
 
@@ -153,7 +126,7 @@ export function useAuthCtxValue() {
           }),
     }
     return authCtxT
-  }, [clientSessionData, logout, updateMyLocalProfile])
+  }, [clientSessionData, logout])
 
   if (!ctx) {
     fetchClientSessionDataRpc()
@@ -183,6 +156,7 @@ wrapFetch((url, reqInit, next) => {
   })
 })
 
+const REDIRECT_Q_NAME = 'redirectTo'
 export function useNeedsWebUserLogin(): {
   isAdmin: boolean
   myProfile: Profile
@@ -195,7 +169,7 @@ export function useNeedsWebUserLogin(): {
       return
     }
     const usp = new URLSearchParams()
-    usp.append(SESSION_CHANGE_REDIRECT_Q_NAME, `${loc.pathname}${loc.search}${loc.hash}`)
+    usp.append(REDIRECT_Q_NAME, `${loc.pathname}${loc.search}${loc.hash}`)
     nav(`/login?${usp.toString()}`)
   }, [authCtx.clientSessionData?.myProfile, authCtx.isAuthenticated, loc, nav])
   return authCtx.clientSessionData?.myProfile

@@ -1,20 +1,15 @@
 import type { EntityIdentifiers } from '@moodlenet/system-entities/common'
 import type { FC, PropsWithChildren } from 'react'
 import { createContext, useMemo } from 'react'
-import type { ProxiedResourceProps } from './components/pages/Resource/ResourcePageHooks.js'
 import { EdResourceEntitiesTools } from './entities.mjs'
 
 export type CurrentResourceContextT = {
   identifiers: EntityIdentifiers | null
-  resourceProps: null | undefined | ProxiedResourceProps
 }
-const defaultContext: CurrentResourceContextT = { identifiers: null, resourceProps: null }
+const defaultContext: CurrentResourceContextT = { identifiers: null }
 export const CurrentResourceContext = createContext<CurrentResourceContextT>(defaultContext)
 
-export function useCurrentResourceContextValue(
-  _key: string,
-  resourceProps: ProxiedResourceProps | null | undefined,
-) {
+export function useCurrentResourceContextValue(_key: string) {
   const identifiers = EdResourceEntitiesTools.getIdentifiersByKey({
     _key,
     type: 'Resource',
@@ -23,18 +18,18 @@ export function useCurrentResourceContextValue(
   const currentResourceContext = useMemo<CurrentResourceContextT>(() => {
     const resourceContext: CurrentResourceContextT = {
       identifiers,
-      resourceProps,
     }
     return resourceContext
-  }, [identifiers, resourceProps])
+  }, [identifiers])
 
   return currentResourceContext
 }
 
-export const ProvideCurrentResourceContext: FC<
-  PropsWithChildren<{ _key: string; resourceProps: ProxiedResourceProps | null | undefined }>
-> = ({ children, _key, resourceProps }) => {
-  const currentResourceContextValue = useCurrentResourceContextValue(_key, resourceProps)
+export const ProvideCurrentResourceContext: FC<PropsWithChildren<{ _key: string }>> = ({
+  children,
+  _key,
+}) => {
+  const currentResourceContextValue = useCurrentResourceContextValue(_key)
   return (
     <CurrentResourceContext.Provider value={currentResourceContextValue}>
       {children}

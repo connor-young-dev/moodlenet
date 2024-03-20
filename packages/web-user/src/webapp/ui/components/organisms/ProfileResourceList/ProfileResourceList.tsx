@@ -1,8 +1,8 @@
+import { NoteAdd } from '@material-ui/icons'
 import { ListCard, PrimaryButton } from '@moodlenet/component-library'
 import type { ResourceCardProps } from '@moodlenet/ed-resource/ui'
 import { ResourceCard } from '@moodlenet/ed-resource/ui'
 import type { ProxyProps } from '@moodlenet/react-app/ui'
-import { NoteAdd } from '@mui/icons-material'
 import type { FC } from 'react'
 import { useMemo } from 'react'
 import './ProfileResourceList.scss'
@@ -20,7 +20,7 @@ export const ProfileResourceList: FC<ProfileResourceListProps> = ({
 }) => {
   const listCard = (
     <ListCard
-      className="profile-resource-list"
+      className="resources"
       content={useMemo(
         () =>
           resourceCardPropsList.map(({ key, props }) => {

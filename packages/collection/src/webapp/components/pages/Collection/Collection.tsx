@@ -5,14 +5,14 @@ import {
   PrimaryButton,
   SecondaryButton,
   Snackbar,
-  SnackbarStack,
   TertiaryButton,
 } from '@moodlenet/component-library'
 import type { MainLayoutProps, ProxyProps } from '@moodlenet/react-app/ui'
 import { MainLayout, useViewport } from '@moodlenet/react-app/ui'
 import { useFormik } from 'formik'
 import type { FC } from 'react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
+import type { SchemaOf } from 'yup'
 
 import type { AssetInfoForm } from '@moodlenet/component-library/common'
 import type { ResourceCardPropsData } from '@moodlenet/ed-resource/ui'
@@ -25,13 +25,10 @@ import type {
   CollectionFormProps,
   CollectionStateProps,
 } from '../../../../common/types.mjs'
-import type { ValidationSchemas } from '../../../../common/validationSchema.mjs'
+import { imageValidationSchema } from '../../../../common/validationSchema.mjs'
 import type { CollectionContributorCardProps } from '../../molecules/CollectionContributorCard/CollectionContributorCard.js'
 import { CollectionContributorCard } from '../../molecules/CollectionContributorCard/CollectionContributorCard.js'
-import type {
-  MainCollectionCardSlots,
-  ValidForms,
-} from '../../organisms/MainCollectionCard/MainCollectionCard.js'
+import type { MainCollectionCardSlots } from '../../organisms/MainCollectionCard/MainCollectionCard.js'
 import { MainCollectionCard } from '../../organisms/MainCollectionCard/MainCollectionCard.js'
 import './Collection.scss'
 
@@ -49,10 +46,12 @@ export type CollectionProps = {
 
   data: CollectionDataProps
   collectionForm: CollectionFormProps
+  validationSchema: SchemaOf<CollectionFormProps>
   state: CollectionStateProps
   actions: CollectionActions
   access: CollectionAccessProps
-  validationSchemas: ValidationSchemas
+  isSaving: boolean
+  isEditingAtStart: boolean
 }
 
 export const Collection: FC<CollectionProps> = ({
@@ -69,71 +68,34 @@ export const Collection: FC<CollectionProps> = ({
 
   data,
   collectionForm,
+  validationSchema,
   state,
   actions,
   access,
-
-  validationSchemas: {
-    draftCollectionValidationSchema,
-    imageValidationSchema,
-    publishedCollectionValidationSchema,
-  },
+  isSaving,
+  isEditingAtStart,
 }) => {
   const viewport = useViewport()
   const { image } = data
   const { isPublished } = state
-  const {
-    editData,
-    deleteCollection,
-    publish,
-    unpublish: setUnpublish,
-    removeResource,
-    setImage,
-  } = actions
+  const { editData, deleteCollection, publish, unpublish, removeResource, setImage } = actions
   const { canPublish, canEdit } = access
-
-  const [emptyOnStart, setEmptyOnStart] = useState<boolean>(
-    !collectionForm.title && !collectionForm.description && !image,
-  )
-  const [isEditing, setIsEditing] = useState<boolean>(emptyOnStart)
-  const [isPublishValidating, setIsPublishValidating] = useState<boolean>(isPublished)
-  const [showCheckPublishSuccess, setShowCheckPublishSuccess] = useState<boolean>(false)
-  const [showPublishSuccess, setShowPublishSuccess] = useState<boolean>(false)
-  const [showUnpublishSuccess, setShowUnpublishSuccess] = useState<boolean>(false)
-  const [shouldShowErrors, setShouldShowErrors] = useState<boolean>(false)
-  const [isToDelete, setIsToDelete] = useState<boolean>(false)
-
-  const prevIsPublishedRef = useRef(isPublished)
-
-  useEffect(() => {
-    if (prevIsPublishedRef.current === false && isPublished === true) {
-      setShowPublishSuccess(true)
-    }
-    if (prevIsPublishedRef.current === true && isPublished === false) {
-      setShowUnpublishSuccess(true)
-    }
-    prevIsPublishedRef.current = isPublished
-  }, [isPublished])
+  const [isEditing, setIsEditing] = useState<boolean>(isEditingAtStart)
 
   const form = useFormik<CollectionFormProps>({
     initialValues: collectionForm,
     validateOnMount: true,
-    enableReinitialize: true,
-    validationSchema: isPublishValidating
-      ? publishedCollectionValidationSchema
-      : draftCollectionValidationSchema,
+    validationSchema: validationSchema,
+    validateOnChange: true,
     onSubmit: values => {
       return editData(values)
     },
   })
-  const isPublishedFormValid = publishedCollectionValidationSchema.isValidSync(form.values)
-  const isDraftFormValid = draftCollectionValidationSchema.isValidSync(form.values)
-
   const imageForm = useFormik<{ image: AssetInfoForm | null | undefined }>({
     initialValues: useMemo(() => ({ image: image }), [image]),
     validateOnMount: true,
-    enableReinitialize: true,
     validationSchema: imageValidationSchema,
+    validateOnChange: true,
     onSubmit: values => {
       return values.image !== image && typeof values.image?.location !== 'string'
         ? setImage(values.image?.location)
@@ -141,90 +103,31 @@ export const Collection: FC<CollectionProps> = ({
     },
   })
 
-  const isImageValid = imageValidationSchema.isValidSync(imageForm.values)
+  const [shouldShowErrors, setShouldShowErrors] = useState<boolean>(false)
+  const [isToDelete, setIsToDelete] = useState<boolean>(false)
 
-  const imageForm_setTouched = imageForm.setTouched
-  const form_setTouched = form.setTouched
-
-  const setFieldsAsTouched = useCallback(() => {
-    form_setTouched({
+  const setFieldsAsTouched = () => {
+    form.setTouched({
       title: true,
       description: true,
     })
-    imageForm_setTouched({ image: true })
-  }, [form_setTouched, imageForm_setTouched])
-
-  const imageForm_validateForm = imageForm.validateForm
-  const form_validateForm = form.validateForm
-
-  const [isCheckingAndPublishing, setIsCheckingAndPublishing] = useState<boolean>(false)
-
-  const checkFormsAndPublish = () => {
-    setIsPublishValidating(true)
-    setIsCheckingAndPublishing(true)
-    applyCheckFormsAndPublish()
+    imageForm.setTouched({ image: true })
   }
 
-  const applyCheckFormsAndPublish = useCallback(() => {
+  const checkFormAndPublish = () => {
     setFieldsAsTouched()
-    imageForm_validateForm()
-
-    if (isPublishedFormValid && imageForm.isValid) {
-      form_validateForm()
+    // form.validateForm
+    // imageForm.validateForm
+    if (form.isValid && imageForm.isValid) {
+      form.submitForm()
+      imageForm.submitForm()
       setShouldShowErrors(false)
       publish()
     } else {
       setIsEditing(true)
       setShouldShowErrors(true)
     }
-  }, [
-    form_validateForm,
-    imageForm.isValid,
-    imageForm_validateForm,
-    isPublishedFormValid,
-    publish,
-    setFieldsAsTouched,
-  ])
-
-  useEffect(() => {
-    if (isCheckingAndPublishing) {
-      applyCheckFormsAndPublish()
-      setIsCheckingAndPublishing(false)
-    }
-  }, [isCheckingAndPublishing, applyCheckFormsAndPublish])
-
-  const [isPublishChecking, setIsPublishChecking] = useState<boolean>(false)
-
-  const publishCheck = () => {
-    setIsPublishValidating(true)
-    setIsPublishChecking(true)
   }
-
-  const applyPublishCheck = useCallback(() => {
-    setFieldsAsTouched()
-    imageForm_validateForm()
-
-    if (isPublishedFormValid && imageForm.isValid) {
-      setShowCheckPublishSuccess(true)
-      setShouldShowErrors(false)
-    } else {
-      form_validateForm()
-      setShouldShowErrors(true)
-    }
-  }, [
-    form_validateForm,
-    imageForm.isValid,
-    imageForm_validateForm,
-    isPublishedFormValid,
-    setFieldsAsTouched,
-  ])
-
-  useEffect(() => {
-    if (isPublishChecking) {
-      applyPublishCheck()
-      setIsPublishChecking(false)
-    }
-  }, [isPublishChecking, applyPublishCheck])
 
   const resourceList = (
     <div className="resource-list">
@@ -250,39 +153,23 @@ export const Collection: FC<CollectionProps> = ({
     </div>
   )
 
-  const unpublish = () => {
-    setIsPublishValidating(false)
-    setShouldShowErrors(false)
-    setUnpublish()
-  }
-
-  const isFormValid: ValidForms = {
-    isDraftFormValid: isDraftFormValid,
-    isPublishedFormValid: isPublishedFormValid,
-    isImageValid: isImageValid,
-  }
-
   const mainCollectionCard = (
     <MainCollectionCard
       key="main-collection-card"
       data={data}
+      // collectionForm={collectionForm}
       form={form}
       imageForm={imageForm}
-      publish={checkFormsAndPublish}
-      publishCheck={publishCheck}
+      publish={checkFormAndPublish}
       state={state}
       actions={actions}
       access={access}
       slots={mainCollectionCardSlots}
       isEditing={isEditing}
       setIsEditing={setIsEditing}
-      setIsPublishValidating={setIsPublishValidating}
-      emptyOnStart={emptyOnStart}
-      setEmptyOnStart={setEmptyOnStart}
-      isFormValid={isFormValid}
-      setFieldsAsTouched={setFieldsAsTouched}
       shouldShowErrors={shouldShowErrors}
       setShouldShowErrors={setShouldShowErrors}
+      isSaving={isSaving}
     />
   )
 
@@ -290,38 +177,30 @@ export const Collection: FC<CollectionProps> = ({
     <CollectionContributorCard {...collectionContributorCardProps} key="contributor-card" />
   ) : null
 
-  const publishButton = !isEditing && canPublish && !isPublished /*  && !isEditing */ && (
-    <PrimaryButton onClick={checkFormsAndPublish} color="green">
-      Publish
-    </PrimaryButton>
-  )
-
-  const publishCheckButton = isEditing && canPublish && !isPublished /*  && !isEditing */ && (
-    <PrimaryButton onClick={publishCheck} color="green">
-      Publish check
-    </PrimaryButton>
-  )
-
-  const unpublishButton =
-    canPublish && isPublished ? (
-      <SecondaryButton onClick={unpublish}>Unpublish</SecondaryButton>
-    ) : null
-
   const editorActionsContainer = canPublish ? (
     <Card
       className="collection-action-card"
       hideBorderWhenSmall={true}
       key="editor-actions-container"
     >
-      {publishButton}
-      {publishCheckButton}
-      {unpublishButton}
+      {canPublish && !isPublished /*  && !isEditing */ && (
+        <PrimaryButton onClick={checkFormAndPublish} color="green">
+          Publish
+        </PrimaryButton>
+      )}
+
+      {canPublish && isPublished ? (
+        <SecondaryButton onClick={unpublish}>Unpublish</SecondaryButton>
+      ) : (
+        <></>
+      )}
     </Card>
   ) : null
 
-  const updatedExtraDetailsItems = [...(extraDetailsItems ?? [])].filter(
-    (item): item is AddonItem => !!item,
-  )
+  const updatedExtraDetailsItems = [
+    // license,
+    ...(extraDetailsItems ?? []),
+  ].filter((item): item is AddonItem => !!item)
 
   const extraDetailsContainer =
     updatedExtraDetailsItems.length > 0 ? (
@@ -349,44 +228,16 @@ export const Collection: FC<CollectionProps> = ({
     ...(rightColumnItems ?? []),
   ].filter((item): item is AddonItem => !!item)
 
-  const checkPublishSnackbar = showCheckPublishSuccess ? (
+  const snackbars = isSaving && (
     <Snackbar
       position="bottom"
-      type="success"
-      autoHideDuration={3000}
+      type="info"
+      waitDuration={1500}
+      autoHideDuration={6000}
       showCloseButton={false}
-      onClose={() => setShowCheckPublishSuccess(false)}
     >
-      {`Success, save before publishing`}
+      {`Content uploading, please don't close the tab`}
     </Snackbar>
-  ) : null
-
-  const publishSnackbar = showPublishSuccess ? (
-    <Snackbar
-      position="bottom"
-      type="success"
-      autoHideDuration={3000}
-      showCloseButton={false}
-      onClose={() => setShowPublishSuccess(false)}
-    >
-      {`Collection published`}
-    </Snackbar>
-  ) : null
-
-  const unpublishSnackbar = showUnpublishSuccess ? (
-    <Snackbar
-      position="bottom"
-      type="success"
-      autoHideDuration={3000}
-      showCloseButton={false}
-      onClose={() => setShowUnpublishSuccess(false)}
-    >
-      {`Collection unpublished`}
-    </Snackbar>
-  ) : null
-
-  const snackbars = (
-    <SnackbarStack snackbarList={[checkPublishSnackbar, publishSnackbar, unpublishSnackbar]} />
   )
 
   const modals = (

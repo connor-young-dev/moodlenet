@@ -1,4 +1,3 @@
-import { silentCatchAbort } from '@moodlenet/react-app/webapp'
 import { useEffect, useMemo, useState } from 'react'
 import type { KnownEntityFeature, KnownEntityType } from '../../../common/types.mjs'
 import { shell } from '../shell.mjs'
@@ -24,13 +23,9 @@ export function useMyFeaturedEntityWithCount({
   const undefinedCount = count === undefined
   useEffect(() => {
     if (!undefinedCount) return
-    shell.rpc
-      .me(
-        'webapp/feature-entity/count/:feature(follow|like)/:entityType(profile|collection|resource|subject)/:_key',
-        { rpcId: `feature-entity/count: ${feature}, ${entityType}, ${_key}` },
-      )(undefined, { feature, entityType, _key })
-      .then(({ count }) => setCount(count))
-      .catch(silentCatchAbort)
+    shell.rpc.me[
+      'webapp/feature-entity/count/:feature(follow|like)/:entityType(profile|collection|resource|subject)/:_key'
+    ](undefined, { feature, entityType, _key }).then(({ count }) => setCount(count))
   }, [_key, undefinedCount, entityType, feature])
   const myFeaturedEntityHandle = useMyFeaturedEntity({ feature, _key, entityType })
   const featuredEntityWithCountHandle = useMemo<MyFeaturedEntityWithCountHandle>(() => {

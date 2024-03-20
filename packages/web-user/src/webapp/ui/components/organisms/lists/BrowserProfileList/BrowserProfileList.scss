@@ -1,20 +1,13 @@
-.browser-profile-list.list-card {
+.browser-profile-list {
   padding: 24px 24px 66px 24px;
   position: relative;
 
   &.show-all:not(.load-more) {
     padding: 24px;
-    &.no-card {
-      padding: 0;
-    }
   }
 
   &.no-card {
-    padding: 0 0 66px 0;
-    > .list-card-footer {
-      border-bottom: 1px solid rgb(0 0 0 / 8%);
-      margin-left: 0;
-    }
+    padding: 0;
   }
 
   > .list-card-footer {
@@ -38,7 +31,6 @@
     padding: 0 0 60px 0;
     > .list-card-footer {
       margin-left: 0;
-      border-top: none;
       > .tertiary-button {
         border-radius: 12px;
       }

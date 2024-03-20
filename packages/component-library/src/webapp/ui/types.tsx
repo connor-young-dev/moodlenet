@@ -10,7 +10,6 @@ export type Organization = {
 export type AddonItem<P = PropsWithChildren<unknown>> = {
   Item: ComponentType<P>
   key: string | number
-  position?: number
 }
 export type AddonItemNoKey = Omit<AddonItem, 'key'>
 

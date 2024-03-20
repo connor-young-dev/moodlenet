@@ -5,13 +5,13 @@ import MainLayout from '../../../layout/MainLayout/MainLayout.js'
 import './styles.scss'
 
 export type MaintenanceProps = {
-  mainLayoutProps: MainLayoutProps
+  mainLayout: MainLayoutProps
   // headerPageTemplateProps: CP<HeaderPageTemplateProps>
   // headerTitleProps: HeaderTitleProps
 }
 
-export const Maintenance: FC<MaintenanceProps> = ({ mainLayoutProps }) => (
-  <MainLayout {...mainLayoutProps} /* hideHeader={true} */>
+export const Maintenance: FC<MaintenanceProps> = ({ mainLayout }) => (
+  <MainLayout {...mainLayout} /* hideHeader={true} */>
     <div className="maintenance-page">
       {/* <HeaderTitle
             {...headerTitleProps}

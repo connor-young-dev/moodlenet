@@ -1,11 +1,7 @@
-import type { AddOnMap } from '@moodlenet/core/lib'
 import { href } from '@moodlenet/react-app/common'
-import { createPlugin } from '@moodlenet/react-app/webapp'
+import { createHookPlugin } from '@moodlenet/react-app/webapp'
 import { useContext, useMemo } from 'react'
-import {
-  getProfileFollowingRoutePath,
-  getProfileHomePageRoutePath,
-} from '../../../common/webapp-routes.mjs'
+import { getProfileHomePageRoutePath } from '../../../common/webapp-routes.mjs'
 import type {
   AvatarMenuItem,
   AvatarMenuProps,
@@ -14,9 +10,9 @@ import { AuthCtx } from '../context/AuthContext.js'
 
 export type AvatarMenuPluginItem = Omit<AvatarMenuItem, 'key'>
 
-export const AvatarMenuPlugins = createPlugin<{
-  menuItems: AddOnMap<AvatarMenuPluginItem>
-}>()
+export const AvatarMenuPlugins = createHookPlugin<{
+  menuItems: AvatarMenuPluginItem
+}>({ menuItems: null })
 
 export function useAvatarMenuProps(): AvatarMenuProps {
   const authCtx = useContext(AuthCtx)
@@ -30,21 +26,12 @@ export function useAvatarMenuProps(): AvatarMenuProps {
         getProfileHomePageRoutePath({ _key: hasProfile._key, displayName: hasProfile.displayName }),
       )
     : href('/')
-  const plugins = AvatarMenuPlugins.usePluginHooks()
+  const [addons] = AvatarMenuPlugins.useHookPlugin()
   const avatarMenuProps = useMemo<AvatarMenuProps>(() => {
     const avatarMenuProps: AvatarMenuProps = {
       avatarUrl,
-      menuItems: plugins.getKeyedAddons('menuItems'),
-      followingMenuProps: hasProfile
-        ? {
-            followingHref: href(
-              getProfileFollowingRoutePath({
-                key: hasProfile._key,
-                displayName: hasProfile.displayName,
-              }),
-            ),
-          }
-        : null,
+      menuItems: addons.menuItems,
+      followingMenuProps: hasProfile ? { followingHref: href('/following') } : null,
       bookmarksMenuProps: hasProfile ? { bookmarksHref: href('/bookmarks') } : null,
       profileMenuProps: hasProfile ? { profileHref: myProfileHref } : null,
       logoutMenuProps: { logout: authCtx.logout },
@@ -52,6 +39,6 @@ export function useAvatarMenuProps(): AvatarMenuProps {
       adminSettingsMenuProps: isAdmin ? { settingsHref: href('/admin') } : null,
     }
     return avatarMenuProps
-  }, [plugins, authCtx.logout, avatarUrl, hasProfile, isAdmin, myProfileHref])
+  }, [addons.menuItems, authCtx.logout, avatarUrl, hasProfile, isAdmin, myProfileHref])
   return avatarMenuProps
 }

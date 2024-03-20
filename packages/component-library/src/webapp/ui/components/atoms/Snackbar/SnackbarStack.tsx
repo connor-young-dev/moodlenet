@@ -1,8 +1,3 @@
-import type React from 'react'
-import type { FC } from 'react'
-import { useMemo } from 'react'
-import { createPortal } from 'react-dom'
-
 import './SnackbarStack.scss'
 
 export type SnackbarStackProps = {
@@ -11,19 +6,17 @@ export type SnackbarStackProps = {
   position?: 'top' | 'bottom'
 }
 
-export const SnackbarStack: FC<SnackbarStackProps> = ({
+export const SnackbarStack: React.FC<SnackbarStackProps> = ({
   snackbarList,
-  className = '',
-  position = 'bottom',
+  className,
+  position,
 }) => {
-  const validSnackbars = useMemo(() => {
-    return snackbarList?.filter(Boolean) ?? []
-  }, [snackbarList])
-
-  return createPortal(
-    <div className={`snackbar-stack ${className} position-${position}`}>{validSnackbars}</div>,
-    document.querySelector('.layout-container#layout-container') ?? document.body,
-  )
+  return <div className={`snackbar-stack ${className} position-${position}`}>{snackbarList}</div>
 }
 
 export default SnackbarStack
+
+SnackbarStack.defaultProps = {
+  position: 'bottom',
+  className: '',
+}

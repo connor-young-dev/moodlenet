@@ -2,7 +2,6 @@ import type { IconTextOptionProps } from '@moodlenet/component-library'
 import { Dropdown, IconPill, IconTextOption } from '@moodlenet/component-library'
 import type { FC } from 'react'
 import { useEffect, useState } from 'react'
-import './LicenseField.scss'
 
 export type LicenseFieldProps = {
   license: string
@@ -11,7 +10,6 @@ export type LicenseFieldProps = {
   error: string | undefined
   shouldShowErrors: boolean
   editLicense: (license: string) => void
-  disabled?: boolean
 }
 
 export const LicenseField: FC<LicenseFieldProps> = ({
@@ -21,7 +19,6 @@ export const LicenseField: FC<LicenseFieldProps> = ({
   error,
   shouldShowErrors,
   editLicense,
-  disabled,
 }) => {
   const licenses = {
     opts: licenseOptions,
@@ -58,14 +55,12 @@ export const LicenseField: FC<LicenseFieldProps> = ({
         e.currentTarget.value !== license && editLicense(e.currentTarget.value)
       }}
       edit
-      noBorder
-      disabled={disabled}
       value={license}
       label={`License`}
-      placeholder="License type"
+      placeholder="License category"
       searchByText={setSearchText}
       highlight={shouldShowErrors && !!error}
-      error={shouldShowErrors && error}
+      error={error}
       position={{ top: 50, bottom: 25 }}
       pills={
         updatedLicenses.selected && (

@@ -1,11 +1,12 @@
+import { CallMade as CallMadeIcon } from '@material-ui/icons'
 import { Card, InputTextField, PrimaryButton } from '@moodlenet/component-library'
 import type { MainFooterProps, MinimalisticHeaderProps } from '@moodlenet/react-app/ui'
 import { SimpleLayout } from '@moodlenet/react-app/ui'
-import { CallMade as CallMadeIcon, MailOutline } from '@mui/icons-material'
+import { MailOutline } from '@mui/icons-material'
 import { useFormik } from 'formik'
 import type { ComponentType, FC } from 'react'
 import { Link } from 'react-router-dom'
-import { recoverPasswordValidationSchema } from '../../../common/validations.mjs'
+import { recoverPasswordValidationSchema } from '../../../common/types.mjs'
 import './RecoverPassword.scss'
 
 export type RecoverPasswordFormValues = { name: string; email: string; password: string }

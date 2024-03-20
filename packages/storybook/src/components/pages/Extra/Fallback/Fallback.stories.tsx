@@ -1,50 +1,58 @@
-import type { Meta as ComponentMeta, StoryFn as ComponentStory } from '@storybook/react'
+// import { ComponentMeta, ComponentStory } from '@storybook/react'
 
-import type { FallbackProps } from '@moodlenet/react-app/ui'
-import { Fallback } from '@moodlenet/react-app/ui'
-import {
-  MainLayoutLoggedInStoryProps,
-  MainLayoutLoggedOutStoryProps,
-} from '../../../layout/MainLayout/MainLayout.stories.js'
+// import {
+//   Fallback,
+//   FallbackProps,
+// } from '../../../../../../react-app/src/webapp/ui/components/pages/Extra/Fallback/Fallback.js'
+// import {
+//   MainLayoutLoggedInStoryProps,
+//   MainLayoutLoggedOutStoryProps,
+// } from '../../../layout/MainLayout/MainLayout.stories.js'
 
-const meta: ComponentMeta<typeof Fallback> = {
-  title: 'Pages/Extra/Fallback',
-  component: Fallback,
-  argTypes: {
-    // backgroundColor: { control: 'color' },
-  },
-  parameters: { layout: 'fullscreen' },
-  excludeStories: [
-    'FallbackStoryProps',
-    'FallbackLoggedOutStoryProps',
-    'FallbackLoggedInStoryProps',
-  ],
-}
+// const meta: ComponentMeta<typeof Fallback> = {
+//   title: 'Pages/Extra/Fallback',
+//   component: Fallback,
+//   argTypes: {
+//     // backgroundColor: { control: 'color' },
+//   },
+//   parameters: { layout: 'fullscreen' },
+//   excludeStories: [
+//     'FallbackStoryProps',
+//     'FallbackLoggedOutStoryProps',
+//     'FallbackLoggedInStoryProps',
+//   ],
+// }
 
-type FallbackStory = ComponentStory<typeof Fallback>
+// const FallbackStory: ComponentStory<typeof Fallback> = args => <Fallback {...args} />
 
-export const FallbackLoggedOutStoryProps: FallbackProps = {
-  mainLayoutProps: MainLayoutLoggedOutStoryProps,
-}
+// export const FallbackLoggedOutStoryProps: FallbackProps = {
+//   mainLayoutProps: MainLayoutLoggedOutStoryProps,
+//   // headerPageTemplateProps: {
+//   //   headerPageProps: HeaderPageLoggedOutStoryProps,
+//   //   isAuthenticated: false,
+//   //   mainPageWrapperProps: {
+//   //     userAcceptsPolicies: null,
+//   //     cookiesPolicyHref: href('Pages/Policies/CookiesPolicy/Default'),
+//   //   },
+//   // },
+// }
 
-export const FallbackLoggedInStoryProps: FallbackProps = {
-  mainLayoutProps: MainLayoutLoggedInStoryProps,
-}
+// export const FallbackLoggedInStoryProps: FallbackProps = {
+//   mainLayoutProps: MainLayoutLoggedInStoryProps,
+//   // headerPageTemplateProps: {
+//   //   headerPageProps: HeaderPageLoggedInStoryProps,
+//   //   isAuthenticated: true,
+//   //   mainPageWrapperProps: {
+//   //     userAcceptsPolicies: null,
+//   //     cookiesPolicyHref: href('Pages/Policies/CookiesPolicy/Default'),
+//   //   },
+//   // },
+// }
 
-export const LoggedOut: FallbackStory = () => {
-  const props = {
-    ...FallbackLoggedOutStoryProps,
-  }
+// export const LoggedOut = FallbackStory.bind({})
+// LoggedOut.args = FallbackLoggedOutStoryProps
 
-  return <Fallback {...props} />
-}
+// export const LoggedIn = FallbackStory.bind({})
+// LoggedIn.args = FallbackLoggedInStoryProps
 
-export const LoggedIn: FallbackStory = () => {
-  const props = {
-    ...FallbackLoggedInStoryProps,
-  }
-
-  return <Fallback {...props} />
-}
-
-export default meta
+// export default meta

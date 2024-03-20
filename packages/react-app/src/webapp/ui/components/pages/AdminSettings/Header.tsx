@@ -1,4 +1,4 @@
-import { Settings } from '@mui/icons-material'
+import { Settings } from '@material-ui/icons'
 
 export const text = 'Settings'
 export const path = '/settings'

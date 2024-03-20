@@ -1,4 +1,4 @@
-.browser-collection-list.list-card {
+.browser-collection-list {
   padding: 24px 24px 66px 24px;
   position: relative;
 
@@ -27,7 +27,6 @@
     padding: 0 0 60px 0;
     > .list-card-footer {
       margin-left: 0;
-      border-top: none;
       > .tertiary-button {
         border-radius: 12px;
       }

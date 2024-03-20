@@ -1,21 +1,22 @@
 import type { LandingCollectionListProps } from '@moodlenet/collection/ui'
-import { CollectionContext, useCollectionCardProps } from '@moodlenet/collection/webapp'
-import { href, searchPagePath } from '@moodlenet/react-app/common'
+import { useCollectionCardProps } from '@moodlenet/collection/webapp'
+import { href } from '@moodlenet/react-app/common'
 import { proxyWith } from '@moodlenet/react-app/ui'
-import { silentCatchAbort } from '@moodlenet/react-app/webapp'
-import { useContext, useEffect, useMemo, useState } from 'react'
-import { useMyProfileContext } from '../../context/MyProfileContext.js'
+import { useEffect, useMemo, useState } from 'react'
+import { shell } from '../../shell.mjs'
 
 export function useMyLandingPageCollectionListDataProps() {
-  const collectionCtx = useContext(CollectionContext)
   const [collections, setCollections] = useState<{ _key: string }[]>([])
+
   useEffect(() => {
-    collectionCtx
-      .rpc('webapp/search', { rpcId: 'landing search collections' })(null, null, { limit: 8 })
-      .then(_ => _.list)
-      .then(setCollections)
-      .catch(silentCatchAbort)
-  }, [collectionCtx])
+    shell.rpc.me['webapp/landing/get-list/:entityType(collections|resources|profiles)'](
+      undefined,
+      {
+        entityType: 'collections',
+      },
+      { limit: 8 },
+    ).then(setCollections)
+  }, [])
   const collectionCardPropsList = useMemo<LandingCollectionListProps['collectionCardPropsList']>(
     () =>
       collections.map(({ _key }) => ({
@@ -28,21 +29,13 @@ export function useMyLandingPageCollectionListDataProps() {
     [collections],
   )
 
-  const myProfileContext = useMyProfileContext()
-  const hasSetInterests = !!myProfileContext?.myInterests.current
   const browserCollectionListProps = useMemo<LandingCollectionListProps>(() => {
     const props: LandingCollectionListProps = {
       collectionCardPropsList,
-      searchCollectionsHref:
-        myProfileContext?.myInterests.searchPageDefaults.href ?? href(searchPagePath()),
-      hasSetInterests,
+      searchCollectionsHref: href('#'),
     }
     return props
-  }, [
-    collectionCardPropsList,
-    hasSetInterests,
-    myProfileContext?.myInterests.searchPageDefaults.href,
-  ])
+  }, [collectionCardPropsList])
 
   return browserCollectionListProps
 }

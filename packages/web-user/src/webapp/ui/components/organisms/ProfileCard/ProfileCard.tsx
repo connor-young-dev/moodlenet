@@ -2,7 +2,6 @@ import type { AddonItem } from '@moodlenet/component-library'
 import { Card } from '@moodlenet/component-library'
 import type { OverallCardProps } from '@moodlenet/react-app/ui'
 import { Link, OverallCard, withProxy } from '@moodlenet/react-app/ui'
-import { getUserLevelDetails } from '../../../../../common/gamification/user-levels.mjs'
 import type { ProfileCardData } from '../../../../../common/profile/type.mjs'
 import type { ProfileAccess, ProfileActions, ProfileState } from '../../../../../common/types.mjs'
 import defaultAvatar from '../../../assets/img/default-avatar.svg'
@@ -38,7 +37,6 @@ export const ProfileCard = withProxy<ProfileCardProps>(
       avatarUrl,
       displayName,
       profileHref,
-      points,
       // organizationName,
     } = data
     // const { followed } = state
@@ -46,10 +44,7 @@ export const ProfileCard = withProxy<ProfileCardProps>(
     const { isCreator, canFollow, isAuthenticated } = access
 
     const { toggleFollow } = actions
-    const {
-      followed,
-      // isPublisher
-    } = state
+    const { followed } = state
 
     const header = (
       <div className="profile-card-header" key="header">
@@ -87,29 +82,16 @@ export const ProfileCard = withProxy<ProfileCardProps>(
       (item): item is AddonItem | JSX.Element => !!item,
     )
 
-    const { avatar, level, title } = getUserLevelDetails(points)
-    const levelAvatar = (
-      <abbr className={`level-avatar level-${level}`} title={`Level ${level} - ${title}`}>
-        <img className="avatar" src={avatar} alt="level avatar" />
-      </abbr>
-    )
-
     return (
-      <Card
-        className={`profile-card 
-      ${/* isPublisher ? 'approved' : '' */ ''}
-      `}
-        hover={true}
-        key={userId}
-      >
+      <Card className="profile-card" hover={true} key={userId}>
         <Link className="profile-card-content" href={profileHref}>
           <div className="images">
             <img className="background" src={backgroundUrl || defaultBackground} alt="Background" />
             <div className="avatar">
-              {levelAvatar}
               <img src={avatarUrl || defaultAvatar} alt="Avatar" />
             </div>
           </div>
+
           <div className="info">
             {updatedMainColumnItems.map(i => ('Item' in i ? <i.Item key={i.key} /> : i))}
           </div>

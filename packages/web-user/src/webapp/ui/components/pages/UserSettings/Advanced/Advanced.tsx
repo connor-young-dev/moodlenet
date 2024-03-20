@@ -1,6 +1,13 @@
 /* eslint-disable prettier/prettier */
 import type { AddonItem } from '@moodlenet/component-library'
-import { Card, Modal, PrimaryButton, SecondaryButton, Snackbar } from '@moodlenet/component-library'
+import {
+  Card,
+  Modal,
+  PrimaryButton,
+  SecondaryButton,
+  Snackbar,
+  SnackbarStack,
+} from '@moodlenet/component-library'
 import { useState, type FC } from 'react'
 import './Advanced.scss'
 
@@ -21,33 +28,19 @@ export const Advanced: FC<AdvancedProps> = ({
 }) => {
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false)
 
-  const leaveSection = (
-    <Card className="column">
-      <div className="parameter">
-        <div className="name">Leave {instanceName}</div>
-        <div className="actions">
-          <SecondaryButton onClick={() => setShowDeleteAccountModal(true)}>
-            Delete account
-          </SecondaryButton>
-        </div>
-      </div>
-    </Card>
-  )
-
-  const updatedMainColumnItems = [leaveSection, ...(mainColumnItems ?? [])].filter(
+  const updatedMainColumnItems = [...(mainColumnItems ?? [])].filter(
     (item): item is AddonItem => !!item,
   )
 
-  const snackbars =
-    // <SnackbarStack
-    // snackbarList={
-    [
-      deleteAccountSuccess ? (
-        <Snackbar type="success">Check your email to confirm the deletion</Snackbar>
-      ) : null,
-    ]
-    // }
-    // ></SnackbarStack>
+  const snackbars = (
+    <SnackbarStack
+      snackbarList={[
+        deleteAccountSuccess ? (
+          <Snackbar type="success">Check your email to confirm the deletion</Snackbar>
+        ) : null,
+      ]}
+    ></SnackbarStack>
+  )
 
   const modals = (
     <>
@@ -69,6 +62,9 @@ export const Advanced: FC<AdvancedProps> = ({
           style={{ maxWidth: '400px' }}
           className="delete-message"
         >
+          {/* Your account will be deleted. <br /> */}
+          {/* Your personal details will be removed. <br /> */}
+          {/* Your contributions will be kept as anonymous. <br /> */}
           An email will be send to confirm the deletion of your account.
         </Modal>
       )}
@@ -104,6 +100,16 @@ export const Advanced: FC<AdvancedProps> = ({
           </div>
         </div>
       </Card> */}
+      <Card className="column">
+        <div className="parameter">
+          <div className="name">Leave {instanceName}</div>
+          <div className="actions">
+            <SecondaryButton onClick={() => setShowDeleteAccountModal(true)}>
+              Delete account
+            </SecondaryButton>
+          </div>
+        </div>
+      </Card>
     </div>
   )
 }

@@ -1,12 +1,11 @@
 // import { BrowserLoggedInStoryProps, BrowserLoggedOutStoryProps } from '@moodlenet/react-app/stories'
-import type { FollowersProps } from '@moodlenet/web-user/ui'
 import { Followers } from '@moodlenet/web-user/ui'
-import type { Meta as ComponentMeta, StoryFn as ComponentStory } from '@storybook/react'
-import { MainLayoutLoggedInStoryProps } from '../../../components/layout/MainLayout/MainLayout.stories.js'
+import type { ComponentMeta, ComponentStory } from '@storybook/react'
+import { MainLayoutLoggedInStoryProps } from 'components/layout/MainLayout/MainLayout.stories.js'
 import {
   useBrowserProfileList,
   useBrowserStoryProps,
-} from '../../../components/organisms/Browser/BrowserProps.stories.props.js'
+} from 'components/organisms/Browser/BrowserProps.stories.js'
 
 const meta: ComponentMeta<typeof Followers> = {
   title: 'Pages/Followers',
@@ -26,13 +25,12 @@ type FollowersStory = ComponentStory<typeof Followers>
 // const FollowersStory: ComponentStory<typeof Followers> = args => <Followers {...args} />
 
 export const LoggedIn: FollowersStory = () => {
-  const props: FollowersProps = {
+  const props = {
     mainLayoutProps: MainLayoutLoggedInStoryProps,
     browserProps: useBrowserStoryProps({
-      mainColumnItems: [useBrowserProfileList(false)],
+      mainColumnItems: [useBrowserProfileList(false)], //@ETTO Followers check that on this page you only show profiles
     }),
     profileName: 'Eduard Stromberg',
-    isCreator: false,
   }
   return <Followers {...props} />
 }
@@ -73,10 +71,10 @@ export const LoggedIn: FollowersStory = () => {
 //   ...FollowersStoryProps,
 // }
 
-// export const LoggedOut: typeof FollowersStory = FollowersStory.bind({})
+// export const LoggedOut = FollowersStory.bind({})
 // LoggedOut.args = FollowersLoggedOutStoryProps
 
-// export const LoggedIn: typeof FollowersStory = FollowersStory.bind({})
+// export const LoggedIn = FollowersStory.bind({})
 // LoggedIn.args = FollowersLoggedInStoryProps
 
 export default meta

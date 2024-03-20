@@ -1,13 +1,5 @@
 import type { SimpleEmailAuthExposeType } from '../common/expose-def.mjs'
 import {
-  changePasswordUsingTokenSchema,
-  confirmSignupEmailValidationSchema,
-  loginValidationSchema,
-  requestPasswordChangeByEmailLinkSchema,
-  setPasswordSchema,
-  signupValidationSchema,
-} from '../common/validations.mjs'
-import {
   changeMyPasswordUsingToken,
   changePassword,
   confirm,
@@ -21,14 +13,14 @@ import { shell } from './shell.mjs'
 export const expose = await shell.expose<SimpleEmailAuthExposeType>({
   rpc: {
     'login': {
-      guard: _ => loginValidationSchema.isValid(_),
+      guard: () => void 0,
       async fn({ email, password }) {
         const resp = await login({ email, password })
         return { success: resp.success }
       },
     },
     'signup': {
-      guard: _ => signupValidationSchema.isValid(_),
+      guard: () => void 0,
       async fn(signupReq) {
         const resp = await signup(signupReq)
         if (!resp.success) {
@@ -38,7 +30,7 @@ export const expose = await shell.expose<SimpleEmailAuthExposeType>({
       },
     },
     'confirm': {
-      guard: _ => confirmSignupEmailValidationSchema.isValid(_),
+      guard: () => void 0,
       async fn({ confirmToken }) {
         const resp = await confirm({ confirmToken })
         if (!resp.success) {
@@ -48,14 +40,14 @@ export const expose = await shell.expose<SimpleEmailAuthExposeType>({
       },
     },
     'webapp/change-password-using-token': {
-      guard: _ => changePasswordUsingTokenSchema.isValid(_),
+      guard: () => void 0,
       async fn({ password, token }) {
         const done = await changeMyPasswordUsingToken({ newPassword: password, token })
         return { success: done }
       },
     },
     'webapp/set-password': {
-      guard: _ => setPasswordSchema.isValid(_),
+      guard: () => void 0,
       async fn({ password }) {
         const currentEmailPwdUser = await getCurrentEmailPwdUser()
         if (!currentEmailPwdUser) {
@@ -65,18 +57,18 @@ export const expose = await shell.expose<SimpleEmailAuthExposeType>({
         return true
       },
     },
-    // 'webapp/get-my-settings-data': {
-    //   guard: () => void 0,
-    //   async fn() {
-    //     const currentEmailPwdUser = await getCurrentEmailPwdUser()
-    //     if (!currentEmailPwdUser) {
-    //       return null
-    //     }
-    //     return { email: currentEmailPwdUser.email }
-    //   },
-    // },
+    'webapp/get-my-settings-data': {
+      guard: () => void 0,
+      async fn() {
+        const currentEmailPwdUser = await getCurrentEmailPwdUser()
+        if (!currentEmailPwdUser) {
+          return null
+        }
+        return { email: currentEmailPwdUser.email }
+      },
+    },
     'webapp/request-password-change-by-email-link': {
-      guard: _ => requestPasswordChangeByEmailLinkSchema.isValid(_),
+      guard: () => void 0,
       async fn({ email }) {
         sendChangePasswordRequestEmail({ email })
       },

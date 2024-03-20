@@ -1,13 +1,18 @@
 import { t } from '@lingui/macro'
-import { isEdgeNodeOfType, narrowNodeType } from '@moodlenet/common/dist/graphql/helpers'
-import type { ID } from '@moodlenet/common/dist/graphql/scalars.graphql'
-import type { AssetRefInput } from '@moodlenet/common/dist/graphql/types.graphql.gen'
+import {
+  isEdgeNodeOfType,
+  narrowNodeType,
+} from '@moodlenet/common/dist/graphql/helpers'
+import { ID } from '@moodlenet/common/dist/graphql/scalars.graphql'
+import { AssetRefInput } from '@moodlenet/common/dist/graphql/types.graphql.gen'
 import { fileExceedsMaxUploadSize } from '@moodlenet/common/dist/staticAsset/lib'
 import { useFormik } from 'formik'
 import { createElement, useCallback, useEffect, useMemo } from 'react'
-import type { SchemaOf } from 'yup'
-import { mixed, object, string } from 'yup'
-import { MIN_RESOURCES_FOR_USER_APPROVAL_REQUESTS, MNEnv } from '../../../../../constants'
+import { mixed, object, SchemaOf, string } from 'yup'
+import {
+  MIN_RESOURCES_FOR_USER_APPROVAL_REQUESTS,
+  MNEnv,
+} from '../../../../../constants'
 import { useLocalInstance } from '../../../../../context/Global/LocalInstance'
 import { useSeoContentId } from '../../../../../context/Global/Seo'
 import { useSession } from '../../../../../context/Global/Session'
@@ -18,15 +23,14 @@ import {
 } from '../../../../../helpers/data'
 import { mainPath } from '../../../../../hooks/glob/nav'
 import { href } from '../../../../elements/link'
-import type { CtrlHook } from '../../../../lib/ctrl'
-import { ctrlHook } from '../../../../lib/ctrl'
+import { ctrlHook, CtrlHook } from '../../../../lib/ctrl'
 import { useCollectionCardCtrl } from '../../../molecules/cards/CollectionCard/Ctrl/CollectionCardCtrl'
 import { useResourceCardCtrl } from '../../../molecules/cards/ResourceCard/Ctrl/ResourceCardCtrl'
 import { useHeaderPageTemplateCtrl } from '../../../templates/HeaderPageTemplateCtrl/HeaderPageTemplateCtrl'
 import { fallbackProps } from '../../Extra/Fallback/Ctrl/FallbackCtrl'
 import { Fallback } from '../../Extra/Fallback/Fallback'
-import type { ProfileProps } from '../Profile'
-import type { ProfileFormValues } from '../types'
+import { ProfileProps } from '../Profile'
+import { ProfileFormValues } from '../types'
 import {
   useAddProfileRelationMutation,
   useDelProfileRelationMutation,
@@ -35,6 +39,8 @@ import {
   useSendEmailToProfileMutation,
 } from './ProfileCtrl.gen'
 
+// TODO //@ETTO: LOOK ETTORE FOR FORM
+
 const validationSchema: SchemaOf<ProfileFormValues> = object({
   avatarImage: mixed()
     .test((v, { createError }) =>
@@ -42,7 +48,7 @@ const validationSchema: SchemaOf<ProfileFormValues> = object({
         ? createError({
             message: t`The image is too big, reduce the size or use another image`,
           })
-        : true,
+        : true
     )
     .optional(),
   backgroundImage: mixed()
@@ -51,7 +57,7 @@ const validationSchema: SchemaOf<ProfileFormValues> = object({
         ? createError({
             message: t`The image is too big, reduce the size or use another image`,
           })
-        : true,
+        : true
     )
     .optional(),
   displayName: string()
@@ -67,7 +73,9 @@ const newCollectionHref = href(mainPath.createNewCollection)
 const newResourceHref = href(mainPath.createNewResource)
 
 export type ProfileCtrlProps = { id: ID }
-export const useProfileCtrl: CtrlHook<ProfileProps, ProfileCtrlProps> = ({ id }) => {
+export const useProfileCtrl: CtrlHook<ProfileProps, ProfileCtrlProps> = ({
+  id,
+}) => {
   useSeoContentId(id)
   const {
     isAuthenticated,
@@ -108,7 +116,7 @@ export const useProfileCtrl: CtrlHook<ProfileProps, ProfileCtrlProps> = ({ id })
       (profile?.collections.edges || [])
         .filter(isEdgeNodeOfType(['Collection']))
         .map(({ node }) => node),
-    [profile?.collections.edges],
+    [profile?.collections.edges]
   )
   const [edit, editProfile] = useEditProfileMutation()
   const [addRelation, addRelationRes] = useAddProfileRelationMutation()
@@ -120,13 +128,16 @@ export const useProfileCtrl: CtrlHook<ProfileProps, ProfileCtrlProps> = ({ id })
       (profile?.resources.edges || [])
         .filter(isEdgeNodeOfType(['Resource']))
         .map(({ node }) => node),
-    [profile?.resources.edges],
+    [profile?.resources.edges]
   )
 
   const kudos = useMemo(
     () =>
-      [...resources, ...collections].reduce((allLikes, { likesCount }) => allLikes + likesCount, 0),
-    [collections, resources],
+      [...resources, ...collections].reduce(
+        (allLikes, { likesCount }) => allLikes + likesCount,
+        0
+      ),
+    [collections, resources]
   )
   const myFollowEdgeId = profile?.myFollow.edges[0]?.edge.id
   const toggleFollowForm = useFormik({
@@ -188,13 +199,14 @@ export const useProfileCtrl: CtrlHook<ProfileProps, ProfileCtrlProps> = ({ id })
   const form = useFormik<ProfileFormValues>({
     validationSchema,
     initialValues: { description: '', displayName: '' },
-    onSubmit: async vals => {
+    onSubmit: async (vals) => {
       if (!form.dirty || editProfile.loading) {
         return
       }
 
       const imageAssetRef: AssetRefInput =
-        !vals.backgroundImage || vals.backgroundImage === form.initialValues.backgroundImage
+        !vals.backgroundImage ||
+        vals.backgroundImage === form.initialValues.backgroundImage
           ? { location: '', type: 'NoChange' }
           : typeof vals.backgroundImage === 'string'
           ? {
@@ -278,7 +290,10 @@ export const useProfileCtrl: CtrlHook<ProfileProps, ProfileCtrlProps> = ({ id })
           },
         },
       })
-      if (_published && editResp.data?.editNode.__typename === 'EditNodeMutationSuccess') {
+      if (
+        _published &&
+        editResp.data?.editNode.__typename === 'EditNodeMutationSuccess'
+      ) {
         await sendEmailMut({
           variables: {
             text: 'Congratulations! Your account has been approved!',
@@ -287,7 +302,7 @@ export const useProfileCtrl: CtrlHook<ProfileProps, ProfileCtrlProps> = ({ id })
         })
       }
     },
-    [edit, isAdmin, profile, sendEmailMut],
+    [edit, isAdmin, profile, sendEmailMut]
   )
   const sendEmailForm = useFormik<{ text: string }>({
     initialValues: { text: '' },
@@ -311,13 +326,17 @@ export const useProfileCtrl: CtrlHook<ProfileProps, ProfileCtrlProps> = ({ id })
     const userId = `${profile.id.split('/')![1]}@${localOrg.domain}`
 
     const props: ProfileProps = {
-      headerPageTemplateProps: ctrlHook(useHeaderPageTemplateCtrl, {}, 'header-page-template'),
+      headerPageTemplateProps: ctrlHook(
+        useHeaderPageTemplateCtrl,
+        {},
+        'header-page-template'
+      ),
       isOwner: isMe,
       resourceCardPropsList: resources.map(({ id }) =>
-        ctrlHook(useResourceCardCtrl, { id, removeAction: false }, id),
+        ctrlHook(useResourceCardCtrl, { id, removeAction: false }, id)
       ),
       collectionCardPropsList: collections.map(({ id }) =>
-        ctrlHook(useCollectionCardCtrl, { id }, id),
+        ctrlHook(useCollectionCardCtrl, { id }, id)
       ),
       overallCardProps: {
         followers: profile.followersCount,
@@ -340,7 +359,8 @@ export const useProfileCtrl: CtrlHook<ProfileProps, ProfileCtrlProps> = ({ id })
         isApproved: profile._published,
         requestApprovalForm,
         isElegibleForApproval:
-          profile.resourcesCount >= (MIN_RESOURCES_FOR_USER_APPROVAL_REQUESTS ?? 0),
+          profile.resourcesCount >=
+          (MIN_RESOURCES_FOR_USER_APPROVAL_REQUESTS ?? 0),
         isWaitingApproval,
         showAccountApprovedSuccessAlert: hasJustBeenApproved,
         unapproveUserForm,

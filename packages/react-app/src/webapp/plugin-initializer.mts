@@ -1,4 +1,3 @@
-import type { PkgIdentifier } from '@moodlenet/core'
 import assert from 'assert'
 import type { PluginMainInitializerObject } from '_connect-moodlenet-pkg-modules_'
 import plugins from '_connect-moodlenet-pkg-modules_'
@@ -11,7 +10,7 @@ export function getCurrentPluginMainInitializerObject(reason = '') {
   )
   return currentPluginMainInitializerObject
 }
-export function getCurrentInitPkg(): PkgIdentifier {
+export function getCurrentInitPkg() {
   return getCurrentPluginMainInitializerObject('getCurrentInitPkg').pkgId
 }
 export async function initializePlugins() {

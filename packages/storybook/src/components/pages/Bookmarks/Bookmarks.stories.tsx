@@ -1,12 +1,12 @@
 // import { BrowserLoggedInStoryProps, BrowserLoggedOutStoryProps } from '@moodlenet/react-app/stories'
 import { Bookmarks } from '@moodlenet/web-user/ui'
-import type { Meta as ComponentMeta, StoryFn as ComponentStory } from '@storybook/react'
-import { MainLayoutLoggedInStoryProps } from '../../../components/layout/MainLayout/MainLayout.stories.js'
+import type { ComponentMeta, ComponentStory } from '@storybook/react'
+import { MainLayoutLoggedInStoryProps } from 'components/layout/MainLayout/MainLayout.stories.js'
 import {
   useBrowserCollectionList,
   useBrowserResourceList,
   useBrowserStoryProps,
-} from '../../../components/organisms/Browser/BrowserProps.stories.props.js'
+} from 'components/organisms/Browser/BrowserProps.stories.js'
 
 const meta: ComponentMeta<typeof Bookmarks> = {
   title: 'Pages/Bookmarks',
@@ -29,7 +29,7 @@ export const LoggedIn: BookmarksStory = () => {
   const props = {
     mainLayoutProps: MainLayoutLoggedInStoryProps,
     browserProps: useBrowserStoryProps({
-      mainColumnItems: [useBrowserResourceList(), useBrowserCollectionList()],
+      mainColumnItems: [useBrowserResourceList(), useBrowserCollectionList()], //@ETTO Bookmarks check that on this page you only show the resources and collection
     }),
   }
   return <Bookmarks {...props} />
@@ -71,10 +71,10 @@ export const LoggedIn: BookmarksStory = () => {
 //   ...BookmarksStoryProps,
 // }
 
-// export const LoggedOut: typeof BookmarksStory = BookmarksStory.bind({})
+// export const LoggedOut = BookmarksStory.bind({})
 // LoggedOut.args = BookmarksLoggedOutStoryProps
 
-// export const LoggedIn: typeof BookmarksStory = BookmarksStory.bind({})
+// export const LoggedIn = BookmarksStory.bind({})
 // LoggedIn.args = BookmarksLoggedInStoryProps
 
 export default meta

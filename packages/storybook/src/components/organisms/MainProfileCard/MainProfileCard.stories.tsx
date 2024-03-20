@@ -1,6 +1,7 @@
 import { MainProfileCard } from '@moodlenet/web-user/ui'
-import type { Meta as ComponentMeta } from '@storybook/react'
-import useMainProfileCardStoryProps from './MainProfileCardProps.stories.props.js'
+import type { ComponentMeta } from '@storybook/react'
+import { useMainProfileCardStoryProps } from './MainProfileCardProps.stories.jsx'
+
 const meta: ComponentMeta<typeof MainProfileCard> = {
   title: 'Molecules/MainProfileCard',
   component: MainProfileCard,
@@ -39,7 +40,7 @@ export const Owner = () => {
       isCreator: true,
       canEdit: true,
       // showAccountApprovedSuccessAlert: true,
-      // isPublisher: true,
+      // isApproved: true,
     },
   })
   return <MainProfileCard {...props} />
@@ -53,7 +54,7 @@ export const Editing = () => {
     },
     isEditing: true,
     // showAccountApprovedSuccessAlert: true,
-    // isPublisher: true,
+    // isApproved: true,
   })
   return <MainProfileCard {...props} />
 }
@@ -63,7 +64,7 @@ export const Editing = () => {
 //       isCreator: true,
 //       isElegibleForApproval: true,
 //       showAccountApprovedSuccessAlert: true,
-//       isPublisher: true,
+//       isApproved: true,
 //     },
 //   })
 //   return <MainProfileCard {...props} />

@@ -1,35 +1,30 @@
-import { cpSync } from 'fs'
-import { mkdtemp } from 'fs/promises'
-import { tmpdir } from 'os'
-import { join } from 'path'
+import { cp } from 'fs/promises'
+// import { tmpdir } from 'os'
+import { resolve } from 'path'
+import rimraf from 'rimraf'
 import { inspect } from 'util'
 import { getWp } from './config.mjs'
-import { getBuildContext } from './get-build-context.mjs'
+import { buildFolder, latestBuildFolder } from './generated-files.mjs'
 
-const baseBuildFolder = process.cwd()
-const buildFolder_tmp = await mkdtemp(join(tmpdir(), 'moodlenet-webapp-build-'))
-const buildContext = await getBuildContext({ baseBuildFolder })
-const alias = await buildContext.getAliases()
-const pkgPlugins = await buildContext.getPkgPlugins()
-// console.log({ buildContext, alias, pkgPlugins })
-const wp = getWp({
-  alias,
-  pkgPlugins,
-  mode: 'prod',
-  buildFolder: buildFolder_tmp,
-})
+const wp = await getWp({ mode: 'prod', buildFolder })
+// shell.log('debug', { baseResolveAlias, latestBuildFolder, buildFolder })
 
-wp.hooks.done.tap('copy build in latest build folder', async wpStats => {
+// process.on('SIGTERM', () => wp.close(() => void 0))
+
+wp.hooks.afterDone.tap('swap folders', async wpStats => {
   if (wpStats?.hasErrors()) {
-    console.error(`Webpack error`, inspect(wpStats.toString(), false, 4, true))
-    process.exit(1)
+    errorExit(wpStats.toString())
   }
-  console.log(
-    `Webpack compilation done`,
-    wpStats.toString(),
-    `copying from ${buildFolder_tmp} to ${buildContext.latestBuildFolder}`,
+  await new Promise<void>((rimrafResolve, rimrafReject) =>
+    rimraf(resolve(latestBuildFolder, '*'), { disableGlob: true }, e =>
+      e ? rimrafReject(e) : rimrafResolve(),
+    ),
   )
-
-  cpSync(buildFolder_tmp, buildContext.latestBuildFolder, { recursive: true })
-  process.exit(0)
+  await cp(buildFolder, latestBuildFolder, { recursive: true })
+  wp.close(() => process.exit(0))
 })
+
+function errorExit(err: any) {
+  console.error(`Webpack error`, inspect(err, false, 4, true))
+  process.exit(1)
+}

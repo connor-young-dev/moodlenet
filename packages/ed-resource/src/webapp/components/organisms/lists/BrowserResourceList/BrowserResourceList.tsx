@@ -47,7 +47,7 @@ export const BrowserResourceList: FC<BrowserResourceListProps> = ({
           <TertiaryButton onClick={setShowAll}>See all resource results</TertiaryButton>
         )
       }
-      minGrid={300}
+      minGrid={showAll ? 400 : 300}
       maxRows={showAll ? undefined : 3}
     />
   )

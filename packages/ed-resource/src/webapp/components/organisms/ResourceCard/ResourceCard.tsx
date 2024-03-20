@@ -1,10 +1,10 @@
-// import BookmarkIcon from '@mui/icons-material/Bookmark'
-// import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder'
-// import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
-// import FavoriteIcon from '@mui/icons-material/Favorite'
-// import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder'
-// import VisibilityIcon from '@mui/icons-material/Visibility'
-// import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
+// import BookmarkIcon from '@material-ui/icons/Bookmark'
+// import BookmarkBorderIcon from '@material-ui/icons/BookmarkBorder'
+// import CloseRoundedIcon from '@material-ui/icons/CloseRounded'
+// import FavoriteIcon from '@material-ui/icons/Favorite'
+// import FavoriteBorderIcon from '@material-ui/icons/FavoriteBorder'
+// import VisibilityIcon from '@material-ui/icons/Visibility'
+// import VisibilityOffIcon from '@material-ui/icons/VisibilityOff'
 // import { useEffect, useRef, useState } from 'react'
 // import { getBackupImage } from '../../../../../helpers/utilities'
 // import { Href, Link } from '../../../../elements/link'
@@ -18,7 +18,7 @@ import defaultAvatar from '../../../assets/img/default-avatar.svg'
 import type { AddonItem } from '@moodlenet/component-library'
 import { Card, getThumbnailFromUrl, isEllipsisActive } from '@moodlenet/component-library'
 import { getBackupImage, Link, withProxy } from '@moodlenet/react-app/ui'
-import { Bolt, Public, PublicOff } from '@mui/icons-material'
+import { Public, PublicOff } from '@mui/icons-material'
 import { useEffect, useRef, useState } from 'react'
 import type {
   ResourceCardAccess,
@@ -27,7 +27,6 @@ import type {
   ResourceCardState,
 } from '../../../../common/types.mjs'
 import { getResourceTypeInfo } from '../../../../common/types.mjs'
-// import { ReactComponent as ExtractInfoIcon } from '../../../assets/icons/extract-info.svg'
 import './ResourceCard.scss'
 
 export type ResourceCardProps = ResourceCardPropsData & ResourceCardPropsUI
@@ -77,7 +76,13 @@ export const ResourceCard = withProxy<ResourceCardProps>(
       contentType,
       downloadFilename,
     } = data
-    const { isPublished, autofillState } = state
+    const {
+      // liked,
+      // bookmarked,
+      isPublished,
+      // isSelected,
+      // selectionMode,
+    } = state
     const {
       canPublish,
       // canLike,
@@ -103,15 +108,13 @@ export const ResourceCard = withProxy<ResourceCardProps>(
     if (orientation === 'horizontal') {
       background = {
         background:
-          'url("' +
-          (thumbnail ? thumbnail : imageUrl ? imageUrl : getBackupImage(id ?? '0')) +
-          '")',
+          'url("' + (thumbnail ? thumbnail : imageUrl ? imageUrl : getBackupImage(id)) + '")',
       }
     } else {
       background = {
         background:
           'linear-gradient(0deg, rgba(0, 0, 0, 0.91) 0%, rgba(0, 0, 0, 0.1729) 45.15%, rgba(0, 0, 0, 0) 100%), url(' +
-          (thumbnail ? thumbnail : imageUrl ? imageUrl : getBackupImage(id ?? '0')) +
+          (thumbnail ? thumbnail : imageUrl ? imageUrl : getBackupImage(id)) +
           ')',
       }
     }
@@ -165,26 +168,6 @@ export const ResourceCard = withProxy<ResourceCardProps>(
       (item): item is AddonItem | JSX.Element => !!item,
     )
 
-    const autofillingState =
-      /*  autofillState === 'extracting-info' ? (
-        <abbr
-          className="extracting-info"
-          title={`Extracting info from ${
-            contentType === 'file'
-              ? downloadFilename
-                ? downloadFilename.split('.').pop()
-                : 'file'
-              : 'link'
-          }`}
-        >
-          <ExtractInfoIcon />
-        </abbr>
-      ) :  */ autofillState === 'ai-generation' ? (
-        <abbr className="ai-generation" title={`Autofilling with AI`}>
-          <Bolt />
-        </abbr>
-      ) : null
-
     const publishState = canPublish ? (
       isPublished ? (
         <abbr
@@ -207,7 +190,7 @@ export const ResourceCard = withProxy<ResourceCardProps>(
       )
     ) : null
 
-    const updatedTopRightItems = [autofillingState, publishState, ...(topRightItems ?? [])].filter(
+    const updatedTopRightItems = [publishState, ...(topRightItems ?? [])].filter(
       (item): item is AddonItem | JSX.Element => !!item,
     )
 

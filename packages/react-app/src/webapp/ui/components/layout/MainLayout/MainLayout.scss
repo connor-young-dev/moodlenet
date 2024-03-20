@@ -26,10 +26,6 @@ body {
   height: fit-content;
   min-height: 100vh;
   background-color: #f6f5f4;
-
-  @media (max-width: 450px) {
-    background-color: white;
-  }
   // background-color: var(--color-light-gray-14);
 
   &.streched {
@@ -95,7 +91,7 @@ body {
     align-items: center;
     justify-content: space-between;
 
-    > *:not(.snackbar) {
+    > * {
       width: 100%;
       max-width: 1100px;
     }

@@ -1,12 +1,11 @@
 import { addTextSearchFields } from '@moodlenet/system-entities/server'
 import assert from 'assert'
 import { readFile } from 'fs/promises'
-import { dirname, resolve } from 'path'
-import { fileURLToPath } from 'url'
+import { resolve } from 'path'
 import { kvStore } from '../../kvStore.mjs'
 import { Profile } from '../../sys-entities.mjs'
 
-const __dirname = dirname(fileURLToPath(import.meta.url))
+const __dirname = new URL('.', import.meta.url).pathname
 const [deleteAccountConfirmationTemplate, messageFromUserTemplate] = await Promise.all(
   ['delete-account-confirmation', 'message-from-user'].map(async templateFileName =>
     readFile(

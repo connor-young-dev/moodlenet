@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+import { useState } from 'react'
 import './Switch.scss'
 
 export type SwitchProps = {
@@ -10,15 +11,26 @@ export type SwitchProps = {
 }
 
 export const Switch: FC<SwitchProps> = ({ className, enabled, mandatory, size, toggleSwitch }) => {
+  const [localEnabled, setLocalEnabled] = useState(enabled)
+  const [animation, setAnimation] = useState<'to-on' | 'to-off' | undefined>(undefined)
+
+  const onClick = () => {
+    toggleSwitch()
+    setLocalEnabled(p => {
+      setAnimation(p ? 'to-off' : 'to-on')
+      return !p
+    })
+  }
+
   return (
     <div
-      className={`switch ${className ? className : ''}  ${enabled ? 'on' : 'off'} ${
+      className={`switch ${className ? className : ''}  ${localEnabled ? 'on' : 'off'} ${
         mandatory ? 'disabled' : ''
       } ${size} `}
-      onClick={toggleSwitch}
+      onClick={onClick}
     >
       <div
-        className={`moving-part ${enabled ? 'to-on' : 'to-off'} ${enabled ? 'on' : 'off'} ${size}`}
+        className={`moving-part ${animation} ${/* enabled */ localEnabled ? 'on' : 'off'} ${size}`}
       />
     </div>
   )

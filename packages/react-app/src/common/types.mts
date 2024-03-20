@@ -1,4 +1,4 @@
-import type { BaseStyleType } from '@moodlenet/component-library/common'
+import type { BaseStyleType } from '@moodlenet/component-library'
 import type { PackageInfo, PkgExpose, PkgExposeDef, PkgIdentifier } from '@moodlenet/core'
 import type { CSSProperties } from 'react'
 
@@ -25,6 +25,6 @@ export type AppearanceData = {
   logo: string
   smallLogo: string
   color: string
-  //TODO //@BRU decide if having this as optional
+  //TODO //@BRU //@ETTO decide if having this as optional
   customStyle?: CustomStyleType
 }

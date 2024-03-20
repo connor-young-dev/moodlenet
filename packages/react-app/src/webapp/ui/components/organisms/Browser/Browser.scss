@@ -7,26 +7,24 @@
     justify-content: center;
     left: 0;
     top: 60px;
-    padding-top: 14px;
-    padding-bottom: 14px;
+    height: 60px;
     width: 100%;
     font-size: 0.7rem;
     box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
     background-color: var(--header-background);
 
     @media screen and (max-width: 675px) {
-      padding: 14px 25px;
+      padding: 0 25px;
     }
 
     > .filter-bar-content {
       display: flex;
-      flex-flow: wrap;
       width: 100%;
       align-items: center;
       max-width: 1100px;
       gap: 10px;
 
-      > .content-type-filter > .floating-menu > .menu {
+      > .content-type-filters > .floating-menu > .menu {
         left: 0;
         transform: none;
       }
@@ -34,24 +32,11 @@
       > .separator {
         width: 1px;
         height: 24px;
-        background-color: #d7d7d7;
+        background-color: #abacaf;
       }
-
       > div {
         display: flex;
         gap: 10px;
-        align-items: center;
-      }
-
-      > .dropdown-filter-field > .input-container {
-        box-shadow: none;
-      }
-
-      > .reset-filters-button {
-        padding: 0 5px;
-        > svg {
-          height: 20px;
-        }
       }
     }
   }

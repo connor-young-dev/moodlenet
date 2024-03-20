@@ -29,8 +29,6 @@ const bookmarksPageAddons = {
   },
   resources: { Item: BrowserResourceListItem, filters: [], name: 'Resources', numElements: NaN },
 }
-BookmarksPagePlugin.register(() => {
-  return {
-    browserItems: bookmarksPageAddons,
-  }
+BookmarksPagePlugin.register(({ useBrowserItems }) => {
+  useBrowserItems(bookmarksPageAddons)
 })

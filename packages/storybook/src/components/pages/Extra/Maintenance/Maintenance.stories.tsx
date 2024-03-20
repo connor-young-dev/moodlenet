@@ -1,50 +1,40 @@
-import type { Meta as ComponentMeta, StoryFn as ComponentStory } from '@storybook/react'
+// import { ComponentMeta, ComponentStory } from '@storybook/react'
+// import {
+//   Maintenance,
+//   MaintenanceProps,
+// } from '../../../../../../react-app/src/webapp/ui/components/pages/Extra/Maintenance/Maintenance.js'
+// import { MainLayoutLoggedOutStoryProps } from '../../../layout/MainLayout/MainLayout.stories.js'
 
-import type { MaintenanceProps } from '@moodlenet/react-app/ui'
-import { Maintenance } from '@moodlenet/react-app/ui'
-import {
-  MainLayoutLoggedInStoryProps,
-  MainLayoutLoggedOutStoryProps,
-} from '../../../layout/MainLayout/MainLayout.stories.js'
+// const meta: ComponentMeta<typeof Maintenance> = {
+//   title: 'Pages/Extra/Maintenance',
+//   component: Maintenance,
+//   argTypes: {
+//     // backgroundColor: { control: 'color' },
+//   },
+//   parameters: { layout: 'fullscreen' },
+//   excludeStories: [
+//     'MaintenanceStoryProps',
+//     'MaintenanceMoodleStoryProps',
+//     'MaintenanceOrganizationStoryProps',
+//   ],
+// }
 
-const meta: ComponentMeta<typeof Maintenance> = {
-  title: 'Pages/Extra/Maintenance',
-  component: Maintenance,
-  argTypes: {
-    // backgroundColor: { control: 'color' },
-  },
-  parameters: { layout: 'fullscreen' },
-  excludeStories: [
-    'MaintenanceStoryProps',
-    'MaintenanceLoggedOutStoryProps',
-    'MaintenanceLoggedInStoryProps',
-  ],
-}
+// const MaintenanceStory: ComponentStory<typeof Maintenance> = args => <Maintenance {...args} />
 
-type MaintenanceStory = ComponentStory<typeof Maintenance>
+// export const MaintenanceMoodleStoryProps: MaintenanceProps = {
+//   mainLayout: MainLayoutLoggedOutStoryProps,
+//   // headerPageTemplateProps: {
+//   //   headerPageProps: HeaderPageLoggedOutStoryProps,
+//   //   isAuthenticated: false,
+//   //   mainPageWrapperProps: {
+//   //     userAcceptsPolicies: null,
+//   //     cookiesPolicyHref: href('Pages/Policies/CookiesPolicy/Default'),
+//   //   },
+//   // },
+//   // headerTitleProps: HeaderTitleStoryProps,
+// }
 
-export const MaintenanceLoggedOutStoryProps: MaintenanceProps = {
-  mainLayoutProps: MainLayoutLoggedOutStoryProps,
-}
+// export const Moodle = MaintenanceStory.bind({})
+// Moodle.args = MaintenanceMoodleStoryProps
 
-export const MaintenanceLoggedInStoryProps: MaintenanceProps = {
-  mainLayoutProps: MainLayoutLoggedInStoryProps,
-}
-
-export const LoggedOut: MaintenanceStory = () => {
-  const props = {
-    ...MaintenanceLoggedOutStoryProps,
-  }
-
-  return <Maintenance {...props} />
-}
-
-export const LoggedIn: MaintenanceStory = () => {
-  const props = {
-    ...MaintenanceLoggedInStoryProps,
-  }
-
-  return <Maintenance {...props} />
-}
-
-export default meta
+// export default meta

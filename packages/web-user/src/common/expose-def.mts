@@ -6,44 +6,24 @@ import type {
   KnownEntityFeature,
   KnownEntityType,
   KnownFeaturedEntities,
-  LeaderBoardContributor,
+  Profile,
   ProfileGetRpc,
   ProfileSearchResultRpc,
   SortTypeRpc,
-  UserInterests,
   WebUserData,
 } from './types.mjs'
-import type { ValidationsConfig } from './validationSchema.mjs'
 export type { EntityIdentifier } from '@moodlenet/system-entities/common'
-
-export type WebappConfigsRpc = { validations: ValidationsConfig }
-export type EditProfileDataRpc = {
-  displayName: string
-  aboutMe: string
-  organizationName: string | undefined | null
-  location: string | undefined | null
-  siteUrl: string | undefined | null
-}
-
-export type LeaderBoardData = {
-  contributors: LeaderBoardContributor[]
-}
 
 export type WebUserExposeType = PkgExposeDef<{
   rpc: {
-    'webapp/get-configs'(): Promise<WebappConfigsRpc>
     'getCurrentClientSessionDataRpc'(): Promise<ClientSessionDataRpc | undefined>
     'loginAsRoot'(body: { rootPassword: string }): Promise<boolean>
-    'webapp/profile/:_key/edit'(
-      body: { editData: EditProfileDataRpc },
-      params: { _key: string },
-    ): Promise<void>
-    'webapp/profile/leader-board-data'(): Promise<LeaderBoardData>
-    'webapp/profile/:_key/get'(
-      body: void,
-      params: { _key: string },
-      query: { ownContributionListLimit: string | undefined },
-    ): Promise<ProfileGetRpc | null>
+    'webapp/profile/edit'(body: Omit<Profile, 'avatarUrl' | 'backgroundUrl'>): Promise<void>
+    'webapp/profile/get'(body: { _key: string }): Promise<ProfileGetRpc | null>
+    'webapp/roles/searchUsers'(body: { search: string }): Promise<WebUserData[]>
+    'webapp/roles/toggleIsAdmin'(
+      body: { profileKey: string } | { userKey: string },
+    ): Promise<boolean>
     'webapp/upload-profile-background/:_key'(
       body: { file: [RpcFile | null | undefined] },
       params: { _key: string },
@@ -69,31 +49,9 @@ export type WebUserExposeType = PkgExposeDef<{
         _key: string
       },
     ): Promise<{ count: number }>
-    'webapp/feature-entity/profiles/:feature(follow|like)/:entityType(profile|collection|resource|subject)/:_key'(
-      body: void,
-      params: {
-        feature: Exclude<KnownEntityFeature, 'bookmark'>
-        entityType: KnownEntityType
-        _key: string
-      },
-      query: {
-        // sortType?: SortTypeRpc
-        after?: string
-        limit?: number
-        mode?: 'reverse'
-      },
-    ): Promise<{ profiles: { _key: string }[] }>
     'webapp/all-my-featured-entities'(): Promise<null | {
       featuredEntities: KnownFeaturedEntities
     }>
-    'webapp/my-interests/get'(): Promise<null | {
-      asDefaultFilters?: boolean
-      interests?: UserInterests
-    }>
-    'webapp/my-interests/save'(body: { interests: UserInterests }): Promise<boolean | undefined>
-    'webapp/my-interests/use-as-default-search-filters'(body: {
-      use: boolean
-    }): Promise<boolean | undefined>
     'webapp/send-message-to-user/:profileKey'(
       body: { message: string },
       params: { profileKey: string },
@@ -127,13 +85,5 @@ export type WebUserExposeType = PkgExposeDef<{
       appearanceData: AppearanceData
     }): Promise<{ valid: boolean }>
     'webapp/admin/packages/update-all-pkgs'(): Promise<{ updatePkgs: Record<string, string> }>
-    'webapp/admin/roles/searchUsers'(body: { search: string }): Promise<WebUserData[]>
-    'webapp/admin/roles/setIsAdmin'(
-      body: { isAdmin: boolean } & ({ profileKey: string } | { userKey: string }),
-    ): Promise<boolean>
-    'webapp/admin/roles/setIsPublisher'(body: {
-      profileKey: string
-      isPublisher: boolean
-    }): Promise<boolean>
   }
 }>

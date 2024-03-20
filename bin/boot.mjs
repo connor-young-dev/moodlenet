@@ -24,18 +24,7 @@ if (noNodeDev) {
   console.log(`starting with node-dev`)
   await execa(
     'npx',
-    [
-      '-y',
-      'node-dev',
-      '--debounce',
-      '2000',
-      '--notify',
-      'false',
-      'start.mjs',
-      '--',
-      ...fwRestOpts,
-      ...fwRestArgs,
-    ],
+    ['-y', 'node-dev', '--notify', 'false', 'start.mjs', '--', ...fwRestOpts, ...fwRestArgs],
     execaOpts,
   )
 }

@@ -11,6 +11,7 @@ export let shutdownGracefullyLocalServer: () => Promise<void>
 
 process.on('SIGTERM', () => shutdownGracefullyLocalServer())
 const app = express()
+
 // BEWARE //@ALE those 2 settings below should likely be explicitely configured ( 'x-forward-*' headers ) - https://expressjs.com/en/guide/behind-proxies.html
 app.set('trust proxy', true)
 app.enable('trust proxy')

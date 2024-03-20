@@ -1,5 +1,3 @@
-import { href } from '@moodlenet/react-app/common'
-import { silentCatchAbort } from '@moodlenet/react-app/webapp'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { User, WebUserData } from '../../../../common/types.mjs'
 import type { UsersProps } from '../../../ui/components/organisms/Roles/Users.js'
@@ -10,12 +8,7 @@ export const useAdminUsersProps = (): UsersProps => {
   const [usersCache, setUsersCache] = useState<WebUserData[]>([])
 
   const searchUser = useCallback((str: string) => {
-    shell.rpc
-      .me('webapp/admin/roles/searchUsers', { rpcId: 'webapp/admin/roles/searchUsers' })({
-        search: str,
-      })
-      .then(setUsersCache)
-      .catch(silentCatchAbort)
+    shell.rpc.me['webapp/roles/searchUsers']({ search: str }).then(setUsersCache)
     setSearch(str)
   }, [])
 
@@ -24,33 +17,22 @@ export const useAdminUsersProps = (): UsersProps => {
   }, [searchUser])
 
   const userProps = useMemo<UsersProps>(() => {
-    const users: UsersProps['users'] = usersCache.map(
-      ({ isPublisher, _key, name: title, email, isAdmin, profileKey, profileHomePath }) => {
-        const toggleIsAdmin = async () => {
-          return shell.rpc
-            .me('webapp/admin/roles/setIsAdmin')({ userKey: _key, isAdmin })
-            .then(() => searchUser(search))
-        }
-        const toggleIsPublisher = async () => {
-          return shell.rpc
-            .me('webapp/admin/roles/setIsPublisher')({ profileKey, isPublisher: !isPublisher })
-            .then(() => searchUser(search))
-        }
-        const user: User = {
-          title,
-          email,
-          isAdmin,
-          isPublisher,
-          profileHref: href(profileHomePath),
-        }
-        return {
-          user,
-          toggleIsAdmin,
-          toggleIsPublisher,
-        }
-      },
-    )
-    return { tableItems: [], users, search: searchUser }
+    const users: UsersProps['users'] = usersCache.map(({ _key, name: title, email, isAdmin }) => {
+      const toggleIsAdmin = async () => {
+        return shell.rpc.me['webapp/roles/toggleIsAdmin']({ userKey: _key }).then(() =>
+          searchUser(search),
+        )
+      }
+      const user: User = { title, email, isAdmin }
+      return {
+        user,
+        toggleIsAdmin,
+      }
+    })
+    return {
+      users,
+      search: searchUser,
+    }
   }, [search, searchUser, usersCache])
 
   return userProps

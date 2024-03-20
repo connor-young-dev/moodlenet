@@ -28,9 +28,6 @@
     },
     {
       "path": "../key-value-store"
-    },
-    {
-      "path": "../core-domain"
     }
   ]
 }

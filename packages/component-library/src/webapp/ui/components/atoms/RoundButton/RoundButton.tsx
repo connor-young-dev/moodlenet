@@ -5,21 +5,22 @@ import {
   Edit as EditIcon,
   InsertDriveFile as InsertDriveFileIcon,
   Search as SearchIcon,
-  Upload as UploadIcon,
-} from '@mui/icons-material'
+} from '@material-ui/icons'
+import { Upload as UploadIcon } from '@mui/icons-material'
 import type { FC, ReactNode } from 'react'
 import './RoundButton.scss'
 
 export type RoundButtonProps = {
+  onClick?(arg0: unknown): unknown
+  onKeyUp?: { key: string; func: () => void }
   className?: string
   tabIndex?: number
   type?: 'cross' | 'trash' | 'edit' | 'refresh' | 'search' | 'file' | 'upload'
   color?: 'gray' | 'red'
   onHoverColor?: 'gray' | 'red' | 'fill-red'
   abbrTitle?: string
-  disabled?: boolean
   icon?: ReactNode
-} & React.HTMLAttributes<HTMLDivElement>
+}
 
 export const RoundButton: FC<RoundButtonProps> = ({
   className,
@@ -27,19 +28,20 @@ export const RoundButton: FC<RoundButtonProps> = ({
   color,
   onHoverColor,
   tabIndex,
-  disabled,
   abbrTitle,
+  onKeyUp,
   icon,
-  ...props
+  onClick,
 }) => {
   const svgClassName = `color-${color} hover-${onHoverColor}`
   return (
-    <abbr
-      className={`round-button ${className} ${disabled ? 'disabled' : ''} 
-    `}
-      title={abbrTitle}
-    >
-      <div className={`content`} tabIndex={tabIndex} {...props}>
+    <abbr className={`round-button ${className}`} title={abbrTitle}>
+      <div
+        className={`content`}
+        onClick={onClick}
+        onKeyUp={e => e.key === onKeyUp?.key && onKeyUp.func()}
+        tabIndex={tabIndex}
+      >
         {icon && icon}
         {!icon && (
           <>

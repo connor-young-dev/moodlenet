@@ -1,4 +1,4 @@
-import type { Meta as ComponentMeta, StoryFn as ComponentStory } from '@storybook/react'
+import type { ComponentMeta, ComponentStory } from '@storybook/react'
 import { href } from '../../../../../common/lib.mjs'
 // import { href } from '../../../../elements/link'
 import smallLogo from '../../../assets/logos/moodlenet-logo-small.svg'
@@ -13,9 +13,6 @@ const meta: ComponentMeta<typeof HeaderTitle> = {
     // backgroundColor: { control: 'color' },
   },
   excludeStories: ['HeaderTitleStoryProps', 'HeaderTitleOrganizationStoryProps'],
-  parameters: {
-    layout: 'centered',
-  },
 }
 
 export const HeaderTitleStoryProps: HeaderTitleProps = {
@@ -32,10 +29,10 @@ export const HeaderTitleOrganizationStoryProps: HeaderTitleProps = {
 
 const HeaderTitleStory: ComponentStory<typeof HeaderTitle> = args => <HeaderTitle {...args} />
 
-export const HeaderTitleDefault: typeof HeaderTitleStory = HeaderTitleStory.bind({})
+export const HeaderTitleDefault = HeaderTitleStory.bind({})
 HeaderTitleDefault.args = HeaderTitleStoryProps
 
-export const HeaderTitleOrganization: typeof HeaderTitleStory = HeaderTitleStory.bind({})
+export const HeaderTitleOrganization = HeaderTitleStory.bind({})
 HeaderTitleOrganization.args = HeaderTitleOrganizationStoryProps
 
 export default meta

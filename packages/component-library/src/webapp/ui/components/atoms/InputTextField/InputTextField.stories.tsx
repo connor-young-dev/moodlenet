@@ -1,6 +1,7 @@
 import { action } from '@storybook/addon-actions'
-import type { Meta as ComponentMeta, StoryFn as ComponentStory } from '@storybook/react'
+import type { ComponentMeta, ComponentStory } from '@storybook/react'
 import { useState } from 'react'
+import PrimaryButton from '../PrimaryButton/PrimaryButton.js'
 import type { InputTextFieldProps } from './InputTextField.js'
 import { InputTextField } from './InputTextField.js'
 
@@ -16,9 +17,6 @@ const meta: ComponentMeta<typeof InputTextField> = {
     'InputTextFieldErrorStoryProps',
     'TextAreaFieldStoryProps',
   ],
-  parameters: {
-    layout: 'centered',
-  },
 }
 
 export const TransStory = () => {
@@ -44,17 +42,20 @@ export const InputTextFieldErrorStoryProps: InputTextFieldProps = {
 }
 
 export const InputButton: ComponentStory<typeof InputTextField> = () => (
-  <InputTextField {...InputTextFieldStoryProps} />
+  <InputTextField
+    {...InputTextFieldStoryProps}
+    action={<PrimaryButton onClick={action('Primary button click')}>Add</PrimaryButton>}
+  />
 )
 
 const InputTextFieldStory: ComponentStory<typeof InputTextField> = args => (
   <InputTextField {...args}></InputTextField>
 )
 
-export const Input: typeof InputTextFieldStory = InputTextFieldStory.bind({})
+export const Input = InputTextFieldStory.bind({})
 Input.args = InputTextFieldStoryProps
 
-export const Error: typeof InputTextFieldStory = InputTextFieldStory.bind({})
+export const Error = InputTextFieldStory.bind({})
 Error.args = InputTextFieldErrorStoryProps
 
 export const TextAreaFieldStoryProps: InputTextFieldProps = {
@@ -69,7 +70,7 @@ export const TextAreaFieldStoryProps: InputTextFieldProps = {
   onChange: action('text area change'),
 }
 
-export const TextArea: typeof InputTextFieldStory = InputTextFieldStory.bind({})
+export const TextArea = InputTextFieldStory.bind({})
 TextArea.args = TextAreaFieldStoryProps
 
 export default meta

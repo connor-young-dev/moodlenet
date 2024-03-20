@@ -1,23 +1,17 @@
 @import '../../../styles/application';
 
-.snackbar-portal {
-  justify-content: center;
-  display: flex;
-}
-
 .snackbar.card {
-  // position: fixed;
   display: flex;
   flex-direction: row;
   width: fit-content;
   min-height: 40px;
-  max-width: 650px;
   color: #fff;
   font-size: 0.875rem;
   font-weight: bold;
   background-color: #7b7b7b;
+  left: 50%;
+  transform: translateX(-50%);
   align-items: center;
-  text-align: center;
   justify-content: space-between;
   padding: 6px 6px 6px 14px;
   margin: 0 20px;
@@ -25,22 +19,24 @@
   gap: 10px;
   z-index: 11;
   box-shadow: 0px 1px 2px 0px rgb(36 39 41 / 5%), 0px 2px 6px 2px rgb(41 44 46 / 5%);
-  opacity: 1;
 
-  &.position-top {
-    top: 68px;
-  }
+  &:not(.inside-snackbar) {
+    &.position-top {
+      top: 68px;
+    }
 
-  &.position-bottom {
-    bottom: 20px;
+    &.position-bottom {
+      bottom: 20px;
+    }
+
+    position: fixed;
   }
 
   > * {
     display: flex;
   }
 
-  > .content:last-child,
-  > .actions:last-child {
+  .content {
     padding-right: 8px;
   }
 
@@ -52,48 +48,50 @@
   }
 
   &.type-success {
-    background-color: var(--success-color);
+    background-color: $success-color;
   }
 
   &.type-error {
-    background-color: var(--error-color);
+    background-color: $error-color;
   }
 
   &.type-warning {
-    background-color: var(--warning-color);
+    background-color: $warning-color;
   }
 
   &.type-info {
-    background-color: var(--info-color);
+    background-color: $info-color;
   }
 
   &.state-opening {
-    animation: fadeIn 0.3s forwards;
+    animation: fadeIn 0.5s forwards;
+    text-align: center;
+  }
 
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-      }
-      to {
-        opacity: 1;
-      }
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
     }
   }
 
   &.state-closing {
-    animation: fadeOut 0.3s forwards;
-
-    @keyframes fadeOut {
-      from {
-        opacity: 1;
-      }
-      to {
-        opacity: 0;
-      }
-    }
+    animation: fadeOut 0.2s forwards;
+    text-align: center;
   }
 
   &.state-closed {
-    opacity: 0;
+    display: none;
+  }
+
+  @keyframes fadeOut {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
   }
 }

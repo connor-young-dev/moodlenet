@@ -58,7 +58,7 @@ export const SubjectField: FC<SubjectFieldProps> = ({
       placeholder="Content category"
       edit
       highlight={shouldShowErrors && !!error}
-      error={shouldShowErrors && error}
+      error={error}
       position={{ top: 50, bottom: 25 }}
       searchByText={setSearchText}
       pills={

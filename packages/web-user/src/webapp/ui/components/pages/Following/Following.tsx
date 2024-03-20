@@ -5,23 +5,12 @@ import type { FC } from 'react'
 export type FollowingProps = {
   mainLayoutProps: MainLayoutProps
   browserProps: BrowserPropsData
-  profileName: string
-  isCreator: boolean
 }
-export const Following: FC<FollowingProps> = ({
-  mainLayoutProps,
-  browserProps,
-  profileName,
-  isCreator,
-}) => {
+export const Following: FC<FollowingProps> = ({ mainLayoutProps, browserProps }) => {
   return (
     <MainLayout {...mainLayoutProps}>
       <div className="Following">
-        <Browser
-          {...browserProps}
-          title={isCreator ? `Following` : `${profileName}${`'s following`}`}
-          showFilters={false}
-        />
+        <Browser {...browserProps} title="Following" />
       </div>
     </MainLayout>
   )

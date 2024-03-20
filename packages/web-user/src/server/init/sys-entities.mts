@@ -1,12 +1,5 @@
 import { Collection } from '@moodlenet/collection/server'
-import {
-  BloomCognitive,
-  EdAssetType,
-  IscedField,
-  IscedGrade,
-  Language,
-  License,
-} from '@moodlenet/ed-meta/server'
+import { EdAssetType, IscedField, IscedGrade, Language, License } from '@moodlenet/ed-meta/server'
 import { Resource } from '@moodlenet/ed-resource/server'
 import type { EntityClass } from '@moodlenet/system-entities/common'
 import type { EntityCollectionDef } from '@moodlenet/system-entities/server'
@@ -23,19 +16,17 @@ import {
 import type { WebUserEntityNames } from '../../common/exports.mjs'
 import { PROFILE_HOME_PAGE_ROUTE_PATH } from '../../common/exports.mjs'
 import { shell } from '../shell.mjs'
-import type { EntityPointsDataType, ProfileDataType } from '../types.mjs'
+import type { ProfileDataType } from '../types.mjs'
 import { betterTokenContext } from '../util.mjs'
 import { publicFilesHttp } from './fs.mjs'
 
-export const { Profile, EntityPoints } = await shell.call(registerEntities)<
+export const { Profile } = await shell.call(registerEntities)<
   {
     Profile: EntityCollectionDef<ProfileDataType>
-    EntityPoints: EntityCollectionDef<EntityPointsDataType>
   },
   WebUserEntityNames
 >({
   Profile: {},
-  EntityPoints: {},
 })
 registerEntityInfoProvider({
   entityClass: Profile.entityClass,
@@ -52,7 +43,7 @@ registerEntityInfoProvider({
 })
 
 function isEdMetaClass(entityClass: EntityClass<any>) {
-  return [IscedField, IscedGrade, Language, EdAssetType, License, BloomCognitive].some(entity =>
+  return [IscedField, IscedGrade, Language, EdAssetType, License].some(entity =>
     isSameClass(entity.entityClass, entityClass),
   )
 }

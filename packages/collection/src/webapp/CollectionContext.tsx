@@ -3,11 +3,9 @@ import { createContext, useCallback, useContext, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getCollectionHomePageRoutePath } from '../common/webapp-routes.mjs'
 import { MainContext } from './MainContext.js'
-import { shell } from './shell.mjs'
 
 export type CollectionContextT = {
   createCollection(): Promise<{ homePath: string; key: string }>
-  rpc: typeof shell.rpc.me
 }
 export const CollectionContext = createContext<CollectionContextT>(null as any)
 
@@ -19,8 +17,8 @@ export function useCollectionContextValue() {
   const createCollection = useCallback<CollectionContextT['createCollection']>(
     async function createCollection(opts?: { noNav?: boolean }) {
       const { _key } = await rpcCaller.create()
-      const homePath = getCollectionHomePageRoutePath({ _key, title: 'no-name' })
-      !opts?.noNav && nav(homePath)
+      const homePath = getCollectionHomePageRoutePath({ _key, title: 'no name' })
+      !opts?.noNav && nav(homePath, { state: { editMode: true } })
       return { homePath, key: _key }
     },
     [rpcCaller, nav],
@@ -29,7 +27,6 @@ export function useCollectionContextValue() {
   const collectionContext = useMemo<CollectionContextT>(() => {
     const collectionContext: CollectionContextT = {
       createCollection,
-      rpc: shell.rpc.me,
     }
     return collectionContext
   }, [createCollection])

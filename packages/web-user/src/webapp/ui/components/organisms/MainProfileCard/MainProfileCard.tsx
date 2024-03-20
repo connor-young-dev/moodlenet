@@ -1,3 +1,4 @@
+import { Edit, Save } from '@material-ui/icons'
 import type { AddonItem } from '@moodlenet/component-library'
 import {
   FloatingMenu,
@@ -7,15 +8,15 @@ import {
   RoundButton,
   SecondaryButton,
   Snackbar,
-  SnackbarStack,
+  TertiaryButton,
   useImageUrl,
 } from '@moodlenet/component-library'
-import { Edit, Save } from '@mui/icons-material'
 import { useFormik } from 'formik'
 
 import { Share } from '@mui/icons-material'
 import type { FC } from 'react'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { messageFormValidationSchema } from '../../../../../common/exports.mjs'
 import type {
   ProfileAccess,
   ProfileActions,
@@ -24,22 +25,15 @@ import type {
   ProfileState,
 } from '../../../../../common/types.mjs'
 import defaultAvatar from '../../../assets/img/default-avatar.svg'
-// import {
-//   ApprovalBadge,
-//   ApprovalButton,
-//   ApprovalInfo,
-// } from '../../atoms/ApproveButton/ApproveButton.js'
-import type { ValidationSchemas } from '../../../../../common/validationSchema.mjs'
-import { ApprovalButton } from '../../atoms/ApproveButton/ApproveButton.js'
 import { FollowButton } from '../../atoms/FollowButton/FollowButton.js'
 import './MainProfileCard.scss'
 
 export type MainProfileCardSlots = {
-  mainColumnItems: (AddonItem | null)[]
-  topItems: (AddonItem | null)[]
-  titleItems: (AddonItem | null)[]
-  subtitleItems: (AddonItem | null)[]
-  footerItems: (AddonItem | null)[]
+  mainColumnItems: AddonItem[]
+  topItems: AddonItem[]
+  titleItems: AddonItem[]
+  subtitleItems: AddonItem[]
+  footerItems: AddonItem[]
 }
 
 export type MainProfileCardPropsControlled = Omit<
@@ -56,7 +50,6 @@ export type MainProfileCardProps = {
   actions: ProfileActions
   profileUrl: string
   toggleIsEditing(): unknown
-  validationSchemas: ValidationSchemas
 }
 
 export const MainProfileCard: FC<MainProfileCardProps> = ({
@@ -67,29 +60,14 @@ export const MainProfileCard: FC<MainProfileCardProps> = ({
   state,
   actions,
   isEditing,
-  validationSchemas,
   profileUrl,
   toggleIsEditing,
 }) => {
   const { mainColumnItems, topItems, titleItems, subtitleItems, footerItems } = slots
-  const { avatarUrl, backgroundUrl } = data
-  const { canEdit, isCreator, isAuthenticated, canFollow, canApprove } = access
-  const {
-    followed,
-    // isPublisher,
-    // isElegibleForApproval,
-    // isWaitingApproval,
-    // showAccountApprovedSuccessAlert,
-  } = state
-  const {
-    toggleFollow,
-    sendMessage,
-    setAvatar,
-    setBackground,
-    // approveUser,
-    // requestApproval,
-    // unapproveUser,
-  } = actions
+  const { avatarUrl, backgroundUrl, userId } = data
+  const { canEdit, isCreator, isAuthenticated, canFollow } = access
+  const { followed } = state
+  const { toggleFollow, sendMessage, setAvatar, setBackground } = actions
 
   const [updatedAvatar, setUpdatedAvatar] = useState<string | undefined | null>(avatarUrl)
   const [updatedBackground, setUpdatedBackground] = useState<string | undefined | null>(
@@ -103,11 +81,12 @@ export const MainProfileCard: FC<MainProfileCardProps> = ({
   const [isShowingSmallCard, setIsShowingSmallCard] = useState<boolean>(false)
   const [isSendingMessage, setIsSendingMessage] = useState<boolean>(false)
   const [showUrlCopiedAlert, setShowUrlCopiedAlert] = useState<boolean>(false)
+  const [showUserIdCopiedAlert, setShowUserIdCopiedAlert] = useState<boolean>(false)
   const [showMessageSentAlert, setShowMessageSentAlert] = useState<boolean>(false)
 
   const avatarForm = useFormik<{ image: File | string | null | undefined }>({
     initialValues: { image: avatarUrl },
-    validationSchema: validationSchemas.avatarImageValidation,
+    // validationSchema: validationSchema,
     onSubmit: values => {
       return typeof values.image !== 'string' ? setAvatar(values.image) : undefined
     },
@@ -117,14 +96,16 @@ export const MainProfileCard: FC<MainProfileCardProps> = ({
   const [avatarFromForm] = useImageUrl(avatarForm.values.image)
 
   useEffect(() => {
-    const avatarToChange =
-      avatarForm.isValid && avatarFromForm ? avatarFromForm : avatarImageUrl ?? null
-    avatarToChange && setUpdatedAvatar(avatarToChange)
-  }, [avatarForm.isValid, avatarFromForm, avatarImageUrl, avatarUrl])
+    setUpdatedAvatar(avatarUrl)
+  }, [avatarUrl])
+
+  useEffect(() => {
+    setUpdatedAvatar(avatarFromForm)
+  }, [avatarFromForm])
 
   const backgroundForm = useFormik<{ image: File | string | null | undefined }>({
     initialValues: { image: backgroundUrl },
-    validationSchema: validationSchemas.backgroundImageValidation,
+    // validationSchema: validationSchema,
     onSubmit: values => {
       return typeof values.image !== 'string' ? setBackground(values.image) : undefined
     },
@@ -134,14 +115,16 @@ export const MainProfileCard: FC<MainProfileCardProps> = ({
   const [backgroundFromForm] = useImageUrl(backgroundForm.values.image)
 
   useEffect(() => {
-    const backgroundToChange =
-      backgroundForm.isValid && backgroundFromForm ? backgroundFromForm : backgroundImageUrl ?? null
-    backgroundToChange && setUpdatedBackground(backgroundToChange)
-  }, [backgroundForm.isValid, backgroundFromForm, backgroundImageUrl])
+    setUpdatedBackground(backgroundUrl)
+  }, [backgroundUrl])
+
+  useEffect(() => {
+    setUpdatedBackground(backgroundFromForm)
+  }, [backgroundFromForm])
 
   const messageForm = useFormik<{ msg: string }>({
     initialValues: { msg: '' },
-    validationSchema: validationSchemas.messageFormValidationSchema,
+    validationSchema: messageFormValidationSchema,
     onSubmit: (values, { resetForm }) => {
       resetForm()
       return sendMessage(values.msg)
@@ -188,6 +171,24 @@ export const MainProfileCard: FC<MainProfileCardProps> = ({
   const uploadAvatar = (e: React.ChangeEvent<HTMLInputElement>) =>
     avatarForm.setFieldValue('image', e.currentTarget.files?.item(0))
 
+  const background = {
+    backgroundImage: 'url("' + updatedBackground + '")',
+    backgroundSize: 'cover',
+  }
+
+  const avatar = {
+    backgroundImage: 'url("' + updatedAvatar + '")',
+    backgroundSize: 'cover',
+  }
+
+  const copyId = () => {
+    navigator.clipboard.writeText(userId)
+    setShowUserIdCopiedAlert(false)
+    setTimeout(() => {
+      setShowUserIdCopiedAlert(true)
+    }, 100)
+  }
+
   const copyUrl = () => {
     navigator.clipboard.writeText(profileUrl)
     setShowUrlCopiedAlert(false)
@@ -203,9 +204,9 @@ export const MainProfileCard: FC<MainProfileCardProps> = ({
           color="green"
           onClick={() => {
             form.submitForm()
-            avatarForm.isValid && avatarForm.submitForm()
-            backgroundForm.isValid && backgroundForm.submitForm()
-            form.isValid && toggleIsEditing()
+            avatarForm.submitForm()
+            backgroundForm.submitForm()
+            form.isValid && avatarForm.isValid && backgroundForm.isValid && toggleIsEditing()
           }}
           key="save-button"
         >
@@ -237,18 +238,26 @@ export const MainProfileCard: FC<MainProfileCardProps> = ({
     </div>
   )
 
+  const copyIdButton = !isEditing && isCreator && (
+    <abbr className={`user-id`} title={`Click to copy your ID to the clipboard`}>
+      <TertiaryButton className="copy-id" onClick={copyId}>
+        Copy ID
+      </TertiaryButton>
+    </abbr>
+  )
+
   const description = isEditing ? (
     <InputTextField
+      textAreaAutoSize
+      value={form.values.aboutMe}
+      onChange={form.handleChange}
+      isTextarea
+      noBorder={true}
+      placeholder={`What should others know about you?`}
       className="description"
       key="description"
       name="aboutMe"
-      onChange={form.handleChange}
-      isTextarea
-      textAreaAutoSize
-      noBorder
       edit={isEditing}
-      placeholder={`What should others know about you?`}
-      value={form.values.aboutMe}
       error={isEditing && shouldShowErrors && form.errors.aboutMe}
     />
   ) : (
@@ -268,27 +277,16 @@ export const MainProfileCard: FC<MainProfileCardProps> = ({
       </div>
     ) : null
 
-  // const approvedBadge = (
-  //   <ApprovalBadge
-  //     canEdit={canEdit}
-  //     isPublisher={isPublisher}
-  //     isEditing={isEditing}
-  //     showAccountApprovedSuccessAlert={showAccountApprovedSuccessAlert}
-  //   />
-  // )
-
-  const updatedTitleItems = [
-    title,
-    // approvedBadge,
-    ...(titleItems ?? []),
-  ].filter((item): item is AddonItem | JSX.Element => !!item)
+  const updatedTitleItems = [title, copyIdButton, ...(titleItems ?? [])].filter(
+    (item): item is AddonItem | JSX.Element => !!item,
+  )
 
   const location = isEditing ? (
     <span key="edit-location">
       <InputTextField
         className="underline"
         placeholder="Location"
-        value={form.values.location ?? undefined}
+        value={form.values.location}
         onChange={form.handleChange}
         noBorder
         name="location"
@@ -297,15 +295,14 @@ export const MainProfileCard: FC<MainProfileCardProps> = ({
       />
     </span>
   ) : (
-    form.values.location &&
-    form.values.location !== '' && <span key="location">{form.values.location}</span>
+    <span key="location">{form.values.location}</span>
   )
 
   const siteUrl = isEditing ? (
     <span key="edit-site-url">
       <InputTextField
         className="underline"
-        value={form.values.siteUrl ?? undefined}
+        value={form.values.siteUrl}
         onChange={form.handleChange}
         noBorder
         placeholder="Website"
@@ -315,12 +312,9 @@ export const MainProfileCard: FC<MainProfileCardProps> = ({
       />
     </span>
   ) : (
-    form.values.siteUrl &&
-    form.values.siteUrl !== '' && (
-      <a key="site-url" href={form.values.siteUrl} target="_blank" rel="noreferrer">
-        {form.values.siteUrl}
-      </a>
-    )
+    <a key="site-url" href={form.values.siteUrl} target="_blank" rel="noreferrer">
+      {form.values.siteUrl}
+    </a>
   )
 
   const updatedSubtitleItems = [location, siteUrl, ...(subtitleItems ?? [])].filter(
@@ -333,11 +327,9 @@ export const MainProfileCard: FC<MainProfileCardProps> = ({
         {updatedTitleItems.map(i => ('Item' in i ? <i.Item key={i.key} /> : i))}
       </div>
 
-      {updatedSubtitleItems.length > 0 && (
-        <div className={`subtitle ${isEditing ? 'edit' : ''}`} key="subtitle-row">
-          {updatedSubtitleItems.map(i => ('Item' in i ? <i.Item key={i.key} /> : i))}
-        </div>
-      )}
+      <div className={`subtitle ${isEditing ? 'edit' : ''}`} key="subtitle-row">
+        {updatedSubtitleItems.map(i => ('Item' in i ? <i.Item key={i.key} /> : i))}
+      </div>
     </div>
   )
 
@@ -383,7 +375,7 @@ export const MainProfileCard: FC<MainProfileCardProps> = ({
         className={`background`}
         key="background"
         style={{
-          backgroundImage: 'url("' + updatedBackground + '")',
+          ...background,
           pointerEvents:
             backgroundForm.isSubmitting || !backgroundForm.values.image ? 'none' : 'inherit',
           cursor: backgroundForm.isSubmitting || !backgroundForm.values.image ? 'auto' : 'pointer',
@@ -399,7 +391,7 @@ export const MainProfileCard: FC<MainProfileCardProps> = ({
       <div
         className={`avatar`}
         style={{
-          backgroundImage: 'url("' + updatedAvatar + '")',
+          ...avatar,
           pointerEvents: avatarForm.isSubmitting || !avatarForm.values.image ? 'auto' : 'inherit',
           cursor: avatarForm.isSubmitting || !avatarForm.values.image ? 'auto' : 'pointer',
         }}
@@ -453,73 +445,100 @@ export const MainProfileCard: FC<MainProfileCardProps> = ({
     </>
   )
 
-  const snackbars = (
-    <SnackbarStack
-      snackbarList={[
-        showUrlCopiedAlert ? (
-          <Snackbar
-            type="success"
-            position="bottom"
-            autoHideDuration={3000}
-            showCloseButton={false}
-          >
-            Copied to clipoard
-          </Snackbar>
-        ) : null,
-        showMessageSentAlert ? (
-          <Snackbar
-            type="success"
-            position="bottom"
-            autoHideDuration={3000}
-            showCloseButton={false}
-          >
-            Message sent
-          </Snackbar>
-        ) : null,
-        avatarForm.errors.image ? (
-          <Snackbar type="error" position="bottom" autoHideDuration={3000} showCloseButton={false}>
-            {avatarForm.errors.image}
-          </Snackbar>
-        ) : null,
-        backgroundForm.errors.image ? (
-          <Snackbar type="error" position="bottom" autoHideDuration={3000} showCloseButton={false}>
-            {backgroundForm.errors.image}
-          </Snackbar>
-        ) : null,
-      ]}
-    />
-  )
+  const snackbars = [
+    showUserIdCopiedAlert && (
+      <Snackbar type="success" position="bottom" autoHideDuration={6000} showCloseButton={false}>
+        User ID copied to the clipboard, use it to connect with Moodle LMS
+      </Snackbar>
+    ),
+    showUrlCopiedAlert && (
+      <Snackbar type="success" position="bottom" autoHideDuration={6000} showCloseButton={false}>
+        Copied to clipoard
+      </Snackbar>
+    ),
+    showMessageSentAlert && (
+      <Snackbar type="success" position="bottom" autoHideDuration={6000} showCloseButton={false}>
+        Message sent
+      </Snackbar>
+    ),
+  ]
 
-  const followButton = !isCreator && (
-    <FollowButton
-      canFollow={canFollow}
-      followed={followed}
-      isAuthenticated={isAuthenticated}
-      isCreator={isCreator}
-      toggleFollow={toggleFollow}
-      key="follow-button"
-    />
-  )
+  const footerButtons = [
+    // isCreator && !isApproved && !isWaitingApproval && (
+    //   <PrimaryButton
+    //     disabled={!isElegibleForApproval}
+    //     onClick={requestApprovalForm.submitForm}
+    //   >
+    //     Request approval
+    //   </PrimaryButton>
+    // ),
+    // isCreator && isWaitingApproval && (
+    //   <SecondaryButton disabled={true}>
+    //     Waiting for approval
+    //   </SecondaryButton>
+    // ),
+    // isAdmin && !isApproved && (
+    //   <PrimaryButton onClick={approveUserForm.submitForm} color="green">
+    //     Approve
+    //   </PrimaryButton>
+    // ),
+    // isAdmin && isApproved && (
+    //   <SecondaryButton
+    //     onClick={unapproveUserForm.submitForm}
+    //     color="red"
+    //   >
+    //     Unapprove
+    //   </SecondaryButton>
+    // ),
+    // !isCreator && !isFollowing && (
+    //   <PrimaryButton
+    //     disabled={!isAuthenticated}
+    //     onClick={toggleFollowForm.submitForm}
+    //     className="following-button"
+    //   >
+    //     {/* <AddIcon /> */}
+    //     Follow
+    //   </PrimaryButton>
+    // ),
+    // !isCreator && isFollowing && (
+    //   <SecondaryButton
+    //     disabled={!isAuthenticated}
+    //     onClick={toggleFollowForm.submitForm}
+    //     className="following-button"
+    //     color="orange"
+    //   >
+    //     {/* <CheckIcon /> */}
+    //     Following
+    //   </SecondaryButton>
+    // ),
+    !isCreator && (
+      <FollowButton
+        canFollow={canFollow}
+        followed={followed}
+        isAuthenticated={isAuthenticated}
+        isCreator={isCreator}
+        toggleFollow={toggleFollow}
+        key="follow-button"
+      />
+    ),
+    !isCreator && (
+      <SecondaryButton
+        color="grey"
+        className={`message`}
+        disabled={!isAuthenticated}
+        onClick={() => setIsSendingMessage(true)}
+        abbr={!isAuthenticated ? 'Login or signup to send messages' : 'Send a message'}
+      >
+        Message
+      </SecondaryButton>
+      // <TertiaryButton
+      //   className={`message ${isAuthenticated ? '' : 'font-disabled'}`}
+      //   onClick={openSendMessage}
+      // >
+      //   <MailOutlineIcon />
+      // </TertiaryButton>
+    ),
 
-  const sendMessageButton = !isCreator && (
-    <SecondaryButton
-      color="grey"
-      className={`message`}
-      disabled={!isAuthenticated}
-      onClick={() => setIsSendingMessage(true)}
-      abbr={!isAuthenticated ? 'Login or signup to send messages' : 'Send a message'}
-    >
-      Message
-    </SecondaryButton>
-    // <TertiaryButton
-    //   className={`message ${isAuthenticated ? '' : 'font-disabled'}`}
-    //   onClick={openSendMessage}
-    // >
-    //   <MailOutlineIcon />
-    // </TertiaryButton>
-  )
-
-  const moreButton = !isCreator ? (
     <FloatingMenu
       key="more-button-menu"
       menuContent={[
@@ -548,20 +567,12 @@ export const MainProfileCard: FC<MainProfileCardProps> = ({
           </SecondaryButton>
         )
       }
-    />
-  ) : null
+    />,
+  ]
 
-  const approvalButton = canApprove ? (
-    <ApprovalButton access={access} state={state} actions={actions} key={'approval-button'} />
-  ) : null
-
-  const updatedFooterItems = [
-    followButton,
-    approvalButton,
-    sendMessageButton,
-    ...(footerItems ?? []),
-    moreButton,
-  ].filter((item): item is AddonItem /* | JSX.Element */ => !!item)
+  const updatedFooterItems = [...footerButtons, ...(footerItems ?? [])].filter(
+    (item): item is AddonItem /* | JSX.Element */ => !!item,
+  )
 
   const footer =
     updatedFooterItems.length > 0 ? (
@@ -570,24 +581,14 @@ export const MainProfileCard: FC<MainProfileCardProps> = ({
       </div>
     ) : null
 
-  // const approvalInfo = (
-  //   <ApprovalInfo
-  //     isPublisher={isPublisher}
-  //     isWaitingApproval={isWaitingApproval}
-  //     isCreator={isCreator}
-  //     isElegibleForApproval={isElegibleForApproval}
-  //   />
-  // )
-
   const updatedMainColumnItems = [
     backgroundContainer,
     avatarContainer,
     topItemsContainer,
     header,
     description,
-    // approvalInfo,
-    ...(mainColumnItems ?? []),
     footer,
+    ...(mainColumnItems ?? []),
   ].filter((item): item is AddonItem | JSX.Element => !!item)
 
   return (

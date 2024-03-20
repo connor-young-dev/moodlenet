@@ -61,9 +61,13 @@ async function orderDeps() {
     ? _ignites.rootPkgLockJson
     : JSON.parse(
         (
-          await execa('npm', ['ls', '--all', '--json', '--package-lock-only', '--depth', '1'], {
-            cwd: _ignites.rootDir,
-          })
+          await execa(
+            'npx',
+            ['-y', 'npm@8', 'ls', '--all', '--json', '--package-lock-only', '--depth', '1'],
+            {
+              cwd: _ignites.rootDir,
+            },
+          )
         ).stdout,
       )
   const pkgjson = _ignites.rootPkgJson

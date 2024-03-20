@@ -1,69 +1,36 @@
-import { useImageUrl } from '@moodlenet/react-app/ui'
-import { createTaskManager, silentCatchAbort } from '@moodlenet/react-app/webapp'
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type {
   CollectionActions,
-  CollectionDataProps,
   CollectionFormProps,
   CollectionMainProps,
-  CollectionRpc,
+  CollectionProps,
+  SaveState,
 } from '../common/types.mjs'
 import { MainContext } from './MainContext.js'
 
-// type PendingImage = {
-//   pendingPromise: Promise<string | null>
-//   file: File
-// }
-const [useUpImageTasks] = createTaskManager<string | null, { file: File | null | undefined }>()
-
-type SaveState = {
-  form: boolean
-  image: boolean
-}
 type myProps = { collectionKey: string }
 export const useMainHook = ({ collectionKey }: myProps): CollectionMainProps | null | undefined => {
   const { rpcCaller } = useContext(MainContext)
   const nav = useNavigate()
-  const [collection, setCollection] = useState<CollectionRpc | null>()
+  const [collection, setCollection] = useState<CollectionProps | null>()
+  const [saveState, setSaved] = useState({ form: false, image: false })
   const [isToDelete, setIsToDelete] = useState(false)
   const [isPublished, setIsPublish] = useState(false)
 
-  const updateDataProp = useCallback(
-    <K extends keyof CollectionDataProps>(k: K, v: CollectionDataProps[K]) =>
-      setCollection(coll => coll && { ...coll, data: { ...coll.data, [k]: v } }),
-    [],
-  )
-  const [upImageTaskSet, upImageTaskId, upImageTaskCurrent] = useUpImageTasks(
-    collectionKey,
-    res => {
-      if (res.type === 'resolved') {
-        updateDataProp('image', res.value ? { credits: null, location: res.value } : null)
-      }
-      setterSave('image', false)
-    },
-  )
-  const [saveState, setSaved] = useState<SaveState>(() => ({
-    form: false,
-    image: !!upImageTaskCurrent,
-  }))
+  useEffect(() => {
+    setCollection(undefined)
+    rpcCaller.get(collectionKey).then(res => {
+      res && setIsPublish(res.state.isPublished)
+      setCollection(res)
+    })
+  }, [collectionKey, rpcCaller])
+
   const setterSave = useCallback(
     (key: keyof SaveState, val: boolean) =>
       setSaved(currentSaved => ({ ...currentSaved, [key]: val })),
     [],
   )
-
-  useEffect(() => {
-    setCollection(undefined)
-    rpcCaller
-      .get(collectionKey)
-      .then(res => {
-        res && setIsPublish(res.state.isPublished)
-        setCollection(res)
-      })
-      .catch(silentCatchAbort)
-  }, [collectionKey, rpcCaller])
-
   // const formSaved = useCallback((form: boolean): void => setterSave('form', form), [setterSave])
 
   const actions = useMemo((): CollectionActions => {
@@ -73,18 +40,26 @@ export const useMainHook = ({ collectionKey }: myProps): CollectionMainProps | n
 
     const { _delete, edit: editRpc, setIsPublished, setImage } = rpcCaller
 
+    const updateData = <T,>(key: string, val: T): typeof collection =>
+      collection && { ...collection, data: { ...collection.data, [key]: val } }
+
+    const updateImageUrl = (imageUrl: string | null) => {
+      setCollection(updateData('imageUrl', imageUrl))
+    }
+
     return {
       async editData(res: CollectionFormProps) {
         setterSave('form', true)
-        editRpc(collectionKey, res)
-          .then(() => {
-            setterSave('form', false)
-          })
-          .catch(() => void 0)
+        editRpc(collectionKey, res).then(() => {
+          setterSave('form', false)
+        })
       },
-      setImage(file: File | null | undefined) {
+      async setImage(file: File | null | undefined) {
         setterSave('image', true)
-        upImageTaskSet(setImage(collectionKey, file, upImageTaskId), { file })
+        setImage(collectionKey, file).then(imageUrl => {
+          updateImageUrl(imageUrl)
+          setterSave('image', false)
+        })
       },
       deleteCollection: () => {
         setIsToDelete(true)
@@ -94,7 +69,7 @@ export const useMainHook = ({ collectionKey }: myProps): CollectionMainProps | n
         })
       },
       removeResource: (resourceKey: string) => {
-        return rpcCaller.actionResorce(collectionKey, 'remove', resourceKey).then(() => {
+        return rpcCaller.removeResource(collectionKey, resourceKey).then(() => {
           setCollection(curr => {
             if (!curr) {
               return curr
@@ -115,41 +90,19 @@ export const useMainHook = ({ collectionKey }: myProps): CollectionMainProps | n
         setIsPublished(collectionKey, false)
       },
     }
-  }, [collectionKey, nav, rpcCaller, setterSave, upImageTaskId, upImageTaskSet])
+  }, [collection, collectionKey, nav, rpcCaller, setterSave])
 
-  const [upImageTaskCurrentObjectUrl] = useImageUrl(upImageTaskCurrent?.ctx.file)
   return useMemo<CollectionMainProps | null | undefined>(
     () =>
       !collection
-        ? collection
+        ? null
         : {
             actions,
-            props: {
-              ...collection,
-              state: { ...collection.state, isPublished },
-              data: {
-                ...collection.data,
-                ...(upImageTaskCurrent
-                  ? {
-                      image: upImageTaskCurrentObjectUrl
-                        ? { location: upImageTaskCurrentObjectUrl, credits: null }
-                        : null,
-                    }
-                  : {}),
-              },
-            },
+            props: { ...collection, state: { ...collection.state, isPublished } },
             saveState,
             isToDelete,
             isSaving: saveState.form || saveState.image,
           },
-    [
-      actions,
-      collection,
-      isPublished,
-      isToDelete,
-      saveState,
-      upImageTaskCurrent,
-      upImageTaskCurrentObjectUrl,
-    ],
+    [actions, collection, isPublished, isToDelete, saveState],
   )
 }

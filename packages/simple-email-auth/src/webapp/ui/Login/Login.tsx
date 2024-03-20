@@ -1,5 +1,5 @@
 import { InputTextField, PrimaryButton, TertiaryButton } from '@moodlenet/component-library'
-import type { Href } from '@moodlenet/react-app/common'
+import { Href } from '@moodlenet/react-app/common'
 import { Link } from '@moodlenet/react-app/ui'
 import type { useFormik } from 'formik'
 import type { FC } from 'react'

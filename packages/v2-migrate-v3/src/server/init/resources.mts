@@ -69,7 +69,7 @@ export async function user_resources() {
             description: v2_resource.description,
             title: v2_resource.name,
             published: isPublisher && v2_resource._published,
-            content: { kind: 'link', url: '' },
+            content: null, //{ kind: 'link', url: '' },
             image:
               v2_resource.image?.ext === true
                 ? {

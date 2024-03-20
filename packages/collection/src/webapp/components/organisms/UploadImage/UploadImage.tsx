@@ -1,4 +1,4 @@
-import { ImageContainer, Modal, Snackbar } from '@moodlenet/component-library'
+import { ImageContainer, Modal } from '@moodlenet/component-library'
 import type { FormikHandle } from '@moodlenet/react-app/ui'
 import { useImageUrl } from '@moodlenet/react-app/ui'
 // import prettyBytes from 'pretty-bytes'
@@ -32,32 +32,17 @@ export const UploadImage: FC<UploadImageProps> = ({ imageForm, backupImage, disp
   const [isShowingImage, setIsShowingImage] = useState<boolean>(false)
   const [imageUrl] = useImageUrl(imageForm.values.image?.location, backupImage?.location)
   const credits = imageForm.values.image?.credits ?? backupImage?.credits
-  const [imageErrors, setImageErrors] = useState<undefined | string>(undefined)
 
   const [isToDrop, setIsToDrop] = useState<boolean>(false)
+
+  const deleteImage = useCallback(() => {
+    imageForm.setFieldValue('image', undefined)
+  }, [imageForm])
 
   const uploadImageRef = useRef<HTMLInputElement>(null)
   const selectImage = () => {
     uploadImageRef.current?.click()
   }
-
-  const imageForm_validateForm = imageForm.validateForm
-  const imageForm_setFieldValue = imageForm.setFieldValue
-  const imageForm_setTouched = imageForm.setTouched
-
-  const setImage = useCallback(
-    (image: AssetInfoForm | undefined | null) => {
-      imageForm_setFieldValue('image', image).then(errors => {
-        if (errors?.image) {
-          setImageErrors(errors?.image)
-          imageForm_setFieldValue('image', null)
-        }
-        imageForm_validateForm()
-        imageForm_setTouched({ image: true })
-      })
-    },
-    [imageForm_setFieldValue, imageForm_setTouched, imageForm_validateForm],
-  )
 
   const dropHandler = useCallback(
     (e: React.DragEvent<HTMLDivElement>) => {
@@ -97,12 +82,16 @@ export const UploadImage: FC<UploadImageProps> = ({ imageForm, backupImage, disp
     e.preventDefault()
   }, [])
 
+  const uploadImage = (file: File) => {
+    imageForm.setFieldValue('image', { location: file })
+  }
+
   const imageContainer = (
     <ImageContainer
       imageUrl={imageUrl}
       credits={credits}
-      deleteImage={() => setImage(null)}
-      uploadImage={f => setImage({ location: f, credits: null })}
+      deleteImage={deleteImage}
+      uploadImage={uploadImage}
       displayOnly={displayOnly}
       overlayCredits={true}
     />
@@ -126,18 +115,9 @@ export const UploadImage: FC<UploadImageProps> = ({ imageForm, backupImage, disp
     ),
   ]
 
-  const snackbars = [
-    imageErrors && (
-      <Snackbar type="error" position="bottom" autoHideDuration={3000} showCloseButton={false}>
-        {imageErrors}
-      </Snackbar>
-    ),
-  ]
-
   return (
     <div className="upload-image">
       {modals}
-      {snackbars}
       {!imageUrl && !displayOnly ? (
         <div className={`uploader `}>
           <div
@@ -160,7 +140,9 @@ export const UploadImage: FC<UploadImageProps> = ({ imageForm, backupImage, disp
               key="image"
               onChange={({ target }) => {
                 const file = target.files?.[0]
-                file && setImage({ location: file, credits: null })
+                if (file) {
+                  imageForm.setFieldValue('image', { location: file })
+                }
               }}
               hidden
             />

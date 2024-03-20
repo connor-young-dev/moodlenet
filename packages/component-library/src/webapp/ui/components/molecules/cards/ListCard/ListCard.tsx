@@ -44,24 +44,27 @@ export const ListCard: FC<ListCardProps> = ({
   )
 
   const [maxHeight, setMaxHeight] = useState<undefined | number>(undefined)
+  // const [paddingTop, setPaddingTop] = useState<number | undefined>(undefined)
+  // const [paddingBottom, setPaddingBottom] = useState<number | undefined>(undefined)
 
   useEffect(() => {
     const parent = contentDiv.current
-    const computedStyle = parent && window.getComputedStyle(parent)
     const childHeight = parent?.children[0]?.clientHeight
-    const gap = Number((computedStyle ? computedStyle.gap : '').replace('px', ''))
-    const paddingTop = Number((computedStyle ? computedStyle.paddingTop : '').replace('px', ''))
-    const paddingBottom = Number(
-      (computedStyle ? computedStyle.paddingBottom : '').replace('px', ''),
+    const gap = Number((parent ? window.getComputedStyle(parent).gap : '').replace('px', ''))
+    const paddingTop = Number(
+      (parent ? window.getComputedStyle(parent).paddingTop : '').replace('px', ''),
     )
+    const paddingBottom = Number(
+      (parent ? window.getComputedStyle(parent).paddingBottom : '').replace('px', ''),
+    )
+
     const newMaxHeight =
       childHeight &&
       maxRows &&
       childHeight * maxRows + (maxRows - 1) * gap + paddingTop + paddingBottom
-    const newMaxHeightToSet =
-      newMaxHeight && (newMaxHeight === maxHeight ? undefined : newMaxHeight)
-    newMaxHeightToSet && setMaxHeight(newMaxHeightToSet)
-  }, [maxHeight, maxRows])
+    newMaxHeight && setMaxHeight(newMaxHeight)
+  }, [contentDiv, maxRows, className])
+
   return (
     <div className={`list-card ${className} ${noCard ? 'no-card' : ''}`}>
       {header && <div className="list-card-header">{header}</div>}
@@ -73,7 +76,6 @@ export const ListCard: FC<ListCardProps> = ({
           className={`content ${direction} ${direction === 'horizontal' ? 'scroll' : ''} ${
             minGrid ? 'grid' : ''
           }`}
-          ref={contentDiv}
           style={{
             // ...(maxHeight && { maxHeight: `${maxHeight}px` }),
             ...(maxRows &&
@@ -84,6 +86,7 @@ export const ListCard: FC<ListCardProps> = ({
             // maxHeight: maxHeight ? `${maxHeight}px` : 'auto',
             gridTemplateColumns: minGrid && `repeat(auto-fill, minmax(${minGrid}px, 1fr))`,
           }}
+          ref={contentDiv}
         >
           {contentWithKeys}
         </div>

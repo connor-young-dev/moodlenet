@@ -4,8 +4,8 @@ import { createPlugin, useMainLayoutProps } from '@moodlenet/react-app/webapp'
 // import { AuthCtx } from '@moodlenet/web-user/webapp'
 import type { AddonItemNoKey } from '@moodlenet/component-library'
 import type { AddOnMap } from '@moodlenet/core/lib'
-import { useContext, useMemo } from 'react'
-import { MainContext } from '../../../MainContext.js'
+import { useMemo } from 'react'
+import { validationSchema } from '../../../../common/validationSchema.mjs'
 import { useMainHook } from '../../../MainHooks.js'
 import type { MainCollectionCardSlots } from '../../organisms/MainCollectionCard/MainCollectionCard.jsx'
 import type { CollectionProps } from './Collection.js'
@@ -26,7 +26,6 @@ export const useCollectionPageProps = ({
 }: {
   collectionKey: string
 }): Omit<CollectionProps, 'isEditingAtStart'> | null | undefined => {
-  const { validationSchemas } = useContext(MainContext)
   // const { isAuthenticated } = useContext(AuthCtx)
   const collectionMainProps = useMainHook({ collectionKey })
   const mainLayoutProps = useMainLayoutProps()
@@ -45,7 +44,7 @@ export const useCollectionPageProps = ({
   })
 
   if (!collectionMainProps) return collectionMainProps
-  const { actions, props } = collectionMainProps
+  const { actions, props, isSaving } = collectionMainProps
   const resourceCardPropsList: CollectionProps['resourceCardPropsList'] = props.resourceList.map(
     ({ _key }) => {
       return {
@@ -85,13 +84,13 @@ export const useCollectionPageProps = ({
     ...layoutProps,
     ...props,
     collectionForm,
+    validationSchema,
     actions,
     access: {
       ...props.access,
       isCreator: collectionMainProps.props.access.isCreator,
     },
-    // saveState: collectionMainProps.saveState,
-    validationSchemas,
+    isSaving,
   }
 
   return collectionProps

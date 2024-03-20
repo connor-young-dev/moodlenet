@@ -11,7 +11,6 @@ export type PrimaryButtonProps = {
   onHoverColor?: '' | 'green' | 'orange' | 'red' | 'green'
   noHover?: boolean
   children?: ReactNode
-  innerRef?: React.LegacyRef<HTMLElement>
 } & React.ButtonHTMLAttributes<HTMLButtonElement>
 
 export const PrimaryButton: FC<PrimaryButtonProps> = ({
@@ -24,12 +23,10 @@ export const PrimaryButton: FC<PrimaryButtonProps> = ({
   noHover,
   disabled,
   onClick,
-  innerRef,
   ...props
 }) => {
   return (
     <abbr
-      ref={innerRef}
       className={`primary-button button ${className ?? ''} ${onHoverColor ?? ''} ${
         disabled ? 'disabled' : ''
       } ${color}`}

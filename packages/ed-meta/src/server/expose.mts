@@ -7,7 +7,7 @@ import { shell } from './shell.mjs'
 export const expose = await shell.expose<EdMetaExposeType>({
   rpc: {
     'webapp/subject-page-data/:_key': {
-      guard: () => void 0,
+      guard: async () => true,
       async fn(_, { _key }) {
         const iscedField = await getIscedFieldRecord(_key)
         if (!iscedField) {
@@ -22,16 +22,11 @@ export const expose = await shell.expose<EdMetaExposeType>({
       },
     },
     'webapp/get-all-published-meta': {
-      guard: () => void 0,
+      guard: async () => true,
       async fn() {
         const pubMetas = await getAllPublishedMeta()
         // shell.log('debug', { pubMetas })
         return {
-          learningOutcomes: pubMetas.bloomCognitives.map(({ entity: { _key, name, verbs } }) => ({
-            name,
-            code: _key,
-            verbs,
-          })),
           languages: pubMetas.languages.map(({ entity: { _key, name } }) => ({
             label: name,
             value: _key,

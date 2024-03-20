@@ -1,14 +1,13 @@
 // import { BrowserLoggedInStoryProps, BrowserLoggedOutStoryProps } from '@moodlenet/react-app/stories'
-import type { FollowingProps } from '@moodlenet/web-user/ui'
 import { Following } from '@moodlenet/web-user/ui'
-import type { Meta as ComponentMeta, StoryFn as ComponentStory } from '@storybook/react'
-import { MainLayoutLoggedInStoryProps } from '../../../components/layout/MainLayout/MainLayout.stories.js'
+import type { ComponentMeta, ComponentStory } from '@storybook/react'
+import { MainLayoutLoggedInStoryProps } from 'components/layout/MainLayout/MainLayout.stories.js'
 import {
   useBrowserCollectionList,
   useBrowserProfileList,
   useBrowserStoryProps,
   useBrowserSubjectList,
-} from '../../../components/organisms/Browser/BrowserProps.stories.props.js'
+} from 'components/organisms/Browser/BrowserProps.stories.js'
 
 const meta: ComponentMeta<typeof Following> = {
   title: 'Pages/Following',
@@ -28,17 +27,15 @@ type FollowingStory = ComponentStory<typeof Following>
 // const FollowingStory: ComponentStory<typeof Following> = args => <Following {...args} />
 
 export const LoggedIn: FollowingStory = () => {
-  const props: FollowingProps = {
+  const props = {
     mainLayoutProps: MainLayoutLoggedInStoryProps,
     browserProps: useBrowserStoryProps({
       mainColumnItems: [
         useBrowserSubjectList(),
         useBrowserProfileList(),
         useBrowserCollectionList(),
-      ],
+      ], //@ETTO Following check that on this page you only show the profiles and collection, on that order, with profiles first
     }),
-    profileName: 'Janine Buvette',
-    isCreator: false,
   }
   return <Following {...props} />
 }
@@ -79,10 +76,10 @@ export const LoggedIn: FollowingStory = () => {
 //   ...FollowingStoryProps,
 // }
 
-// export const LoggedOut: typeof FollowingStory = FollowingStory.bind({})
+// export const LoggedOut = FollowingStory.bind({})
 // LoggedOut.args = FollowingLoggedOutStoryProps
 
-// export const LoggedIn: typeof FollowingStory = FollowingStory.bind({})
+// export const LoggedIn = FollowingStory.bind({})
 // LoggedIn.args = FollowingLoggedInStoryProps
 
 export default meta

@@ -1,5 +1,4 @@
 import { MemoryRouter } from 'react-router-dom'
-import SnackbarCtxProvider from '../../component-library/src/webapp/ui/components/atoms/Snackbar/SnackbarContext'
 import { ProvideViewport } from '../../react-app/src/webapp/ui/lib/viewport'
 import { ProvideStorybookLinkComponent } from '../src/lib/SBLinkComponent'
 import { ProvideSBMainSearchBoxCtx } from '../src/MainSearchBoxCtxProvider'
@@ -41,9 +40,7 @@ export const decorators = [
         <ProvideStorybookLinkComponent>
           <Wrapper>
             <ProvideSBMainSearchBoxCtx>
-              <SnackbarCtxProvider>
-                <Story />
-              </SnackbarCtxProvider>
+              <Story />
             </ProvideSBMainSearchBoxCtx>
           </Wrapper>
         </ProvideStorybookLinkComponent>

@@ -19,10 +19,9 @@ export function getImageAssetInfo(image: Image | undefined | null): AssetInfo | 
   if (!(image && location)) {
     return null
   }
-
   const assetInfo: AssetInfo = {
     location,
-    credits: image.kind === 'url' ? image.credits ?? null : null,
+    credits: image.credits ?? null,
   }
 
   return assetInfo

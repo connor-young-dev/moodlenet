@@ -1,5 +1,5 @@
 // import { Trans } from '@lingui/macro'
-import { Search } from '@mui/icons-material'
+import { Search } from '@material-ui/icons'
 import type React from 'react'
 import type { ReactElement } from 'react'
 import { useEffect, useRef, useState } from 'react'

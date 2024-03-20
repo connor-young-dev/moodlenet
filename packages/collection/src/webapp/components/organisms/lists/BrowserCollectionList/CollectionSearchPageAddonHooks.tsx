@@ -1,8 +1,7 @@
-import type { AddOnMap } from '@moodlenet/core/lib'
 import { MainSearchBoxCtx, proxyWith, type SortType } from '@moodlenet/react-app/ui'
 import {
-  silentCatchAbort,
   useUrlQueryString,
+  type PkgAddOns,
   type SearchEntityPageWrapper,
   type SearchEntitySectionAddon,
 } from '@moodlenet/react-app/webapp'
@@ -36,33 +35,29 @@ export const SearchCollectionContext = createContext<SearchCollectionContextT>(n
 export const ProvideSearchCollectionContext: FC<PropsWithChildren<unknown>> = ({ children }) => {
   const [collectionList, collectionListAction] = useReducer(reducer, [])
   const [collectionSearchResult, setCollectionSearchResult] = useState<CollectionSearchResultRpc>()
-  const { qText: q } = useContext(MainSearchBoxCtx)
+  const { q } = useContext(MainSearchBoxCtx)
   const [queryUrlParams, setQueryUrlParams] = useUrlQueryString(['sortType'], shell.pkgId.name)
   const sortType: SortTypeRpc = isSortTypeRpc(queryUrlParams.sortType)
     ? queryUrlParams.sortType
     : 'Popular'
 
   const load = useCallback(
-    (limit: number, cursor?: string) => {
-      return shell.rpc
-        .me('webapp/search', { rpcId: 'search' })(null, null, {
-          limit,
-          sortType,
-          text: q,
-          after: cursor,
-        })
-        .then(res => {
-          setCollectionSearchResult(res)
-          return res
-        })
-        .catch(silentCatchAbort)
+    async (limit: number, cursor?: string) => {
+      const res = await shell.rpc.me['webapp/search'](null, null, {
+        limit,
+        sortType,
+        text: q,
+        after: cursor,
+      })
+      setCollectionSearchResult(res)
+      return res
     },
     [q, sortType],
   )
 
   useEffect(() => {
     load(12).then(res => {
-      res && collectionListAction(['set', res.list])
+      collectionListAction(['set', res.list])
     })
   }, [load])
 
@@ -72,7 +67,7 @@ export const ProvideSearchCollectionContext: FC<PropsWithChildren<unknown>> = ({
       return
     }
     const res = await load(36, collectionSearchResult?.endCursor)
-    res && collectionListAction(['more', res.list])
+    collectionListAction(['more', res.list])
   }, [hasNoMore, load, collectionSearchResult?.endCursor])
 
   const setSortType = useCallback<SearchCollectionContextT['setSortType']>(
@@ -85,9 +80,8 @@ export const ProvideSearchCollectionContext: FC<PropsWithChildren<unknown>> = ({
   return <SearchCollectionContext.Provider value={ctx}>{children}</SearchCollectionContext.Provider>
 }
 
-export const SearchCollectionSectionAddon: AddOnMap<SearchEntitySectionAddon> = {
+export const SearchCollectionSectionAddon: PkgAddOns<SearchEntitySectionAddon> = {
   collections: {
-    position: 1,
     Item: browserMainColumnItemBase => {
       const { collectionList, loadMore } = useContext(SearchCollectionContext)
 
@@ -122,6 +116,6 @@ export const SearchCollectionSectionAddon: AddOnMap<SearchEntitySectionAddon> = 
   },
 }
 
-export const SearchCollectionWrapperAddon: AddOnMap<SearchEntityPageWrapper> = {
+export const SearchCollectionWrapperAddon: PkgAddOns<SearchEntityPageWrapper> = {
   default: { Wrapper: ProvideSearchCollectionContext },
 }

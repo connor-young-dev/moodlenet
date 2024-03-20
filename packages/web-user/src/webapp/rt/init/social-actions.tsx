@@ -1,8 +1,8 @@
+import { PermIdentity } from '@material-ui/icons'
 import { CollectionCardPlugins, CollectionPagePlugins } from '@moodlenet/collection/webapp'
 import type { PluginHookResult } from '@moodlenet/core/lib'
 import { SubjectCardPlugins, SubjectPagePlugins } from '@moodlenet/ed-meta/webapp'
 import { ResourceCardPlugins, ResourcePagePlugins } from '@moodlenet/ed-resource/webapp'
-import { PermIdentity } from '@mui/icons-material'
 import { useEffect, useMemo, useState } from 'react'
 import { BookmarkButtonContainer, LikeButtonContainer } from '../exports.mjs'
 import { useSwichAddonsByAuth } from '../lib/AddonsByUserRule.js'
@@ -55,11 +55,11 @@ CollectionPagePlugins.register(({ collectionKey, info }) => {
 function useSubjectFollowersCount(subjectKey: string) {
   const [numFollowers, setNumFollowers] = useState(0)
   useEffect(() => {
-    shell.rpc
-      .me(
-        'webapp/feature-entity/count/:feature(follow|like)/:entityType(profile|collection|resource|subject)/:_key',
-      )(undefined, { _key: subjectKey, entityType: 'subject', feature: 'follow' })
-      .then(res => setNumFollowers(res.count))
+    shell.rpc.me[
+      'webapp/feature-entity/count/:feature(follow|like)/:entityType(profile|collection|resource|subject)/:_key'
+    ](undefined, { _key: subjectKey, entityType: 'subject', feature: 'follow' }).then(res =>
+      setNumFollowers(res.count),
+    )
   }, [subjectKey])
   return { numFollowers }
 }

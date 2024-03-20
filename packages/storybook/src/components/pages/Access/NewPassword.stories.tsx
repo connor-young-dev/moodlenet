@@ -5,10 +5,10 @@ import type { NewPasswordProps } from '@moodlenet/simple-email-auth/ui'
 import { NewPassword } from '@moodlenet/simple-email-auth/ui'
 import { MinimalisticAccessButtonsStories } from '@moodlenet/web-user/stories'
 import { action } from '@storybook/addon-actions'
-import type { Meta as ComponentMeta } from '@storybook/react'
+import type { ComponentMeta } from '@storybook/react'
+import { FooterStoryProps } from 'components/organisms/Footer/Footer.stories.js'
 import { useEffect } from 'react'
 import type { PartialDeep } from 'type-fest'
-import { FooterStoryProps } from '../../../components/organisms/Footer/Footer.stories.js'
 
 const meta: ComponentMeta<typeof NewPassword> = {
   title: 'Pages/Access/NewPassword',
@@ -23,7 +23,7 @@ export const useNewPasswordStoryProps = (
   return overrideDeep<NewPasswordProps>(
     {
       headerProps: MinimalisticHeaderStories.MinimalisticHeaderStoryProps(
-        MinimalisticAccessButtonsStories.getMinimalisticAccessHeaderItems({
+        MinimalisticAccessButtonsStories.getAccesMinimalisticHeaderItems({
           showLoginButton: false,
           loginHref: href('Pages/Access/Login/Default'),
           showSignupButton: false,

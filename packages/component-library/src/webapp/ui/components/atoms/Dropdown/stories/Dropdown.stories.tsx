@@ -1,10 +1,10 @@
-import type { Meta as ComponentMeta, StoryFn as ComponentStory } from '@storybook/react'
+import type { ComponentMeta, ComponentStory } from '@storybook/react'
 import { Dropdown, IconPill, IconTextOption, SimplePill, TextOption } from '../Dropdown.js'
-import { LevelDropdown, LicenseDropdown } from './DropdownProps.stories.props.js'
-import { useStoriesDDCtrl } from './DropdownUtil.stories.mjs'
+import { LevelDropdown, LicenseDropdown } from './DropdownProps.stories.js'
+import { useStoriesDDCtrl } from './DropdownUtil.stories.js'
 
 const meta: ComponentMeta<typeof Dropdown> = {
-  title: 'Atoms/Dropdown',
+  title: 'Atoms/DropdownNew',
   component: Dropdown,
   argTypes: {
     // backgroundColor: { control: 'color' },
@@ -17,9 +17,6 @@ const meta: ComponentMeta<typeof Dropdown> = {
       </div>
     ),
   ],
-  parameters: {
-    layout: 'centered',
-  },
 }
 
 export const Text: ComponentStory<typeof Dropdown> = () => {
@@ -125,7 +122,7 @@ export const TextMulti: ComponentStory<typeof Dropdown> = () => {
       searchByText={setFilter}
       value={value}
       multiple
-      multilines={true}
+      multilines={false}
       edit={edit}
     >
       {selectedOpts &&

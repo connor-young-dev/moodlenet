@@ -18,7 +18,7 @@ export type RpcBodyWithFilesConfig = {
   fields: {
     [fieldName: string]: number | RpcBodyFieldConfig
   }
-  maxSize: number
+  maxFileSize?: number | undefined
 }
 export type RpcDefItem<Fn extends RpcFn = RpcFn> = {
   fn: Fn

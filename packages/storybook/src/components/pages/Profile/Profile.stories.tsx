@@ -1,12 +1,12 @@
 import { OverallCardStories } from '@moodlenet/react-app/stories'
-// import { Profile } from '@moodlenet/web-user/ui'
 import { Profile } from '@moodlenet/web-user/ui'
-import type { Meta as ComponentMeta, StoryFn as ComponentStory } from '@storybook/react'
+import { action } from '@storybook/addon-actions'
+import type { ComponentMeta, ComponentStory } from '@storybook/react'
+import { getCollectionCardsStoryProps } from 'components/organisms/CollectionCard/CollectionCardProps.stories.js'
+import { getResourceCardsStoryProps } from 'components/organisms/ResourceCard/ResourceCardProps.stories.js'
 import { useState } from 'react'
-import { getCollectionCardsStoryProps } from '../../../components/organisms/CollectionCard/CollectionCardProps.stories.props.js'
-import { getResourceCardsStoryProps } from '../../../components/organisms/ResourceCard/ResourceCardProps.stories.props.js'
 import { MainLayoutLoggedOutStoryProps } from '../../layout/MainLayout/MainLayout.stories.js'
-import { useProfileStoryProps } from './ProfileProps.stories.props.js'
+import { useProfileStoryProps } from './ProfileProps.stories.jsx'
 // import { href } from '../../../elements/link'
 
 const meta: ComponentMeta<typeof Profile> = {
@@ -31,10 +31,10 @@ type ProfileStory = ComponentStory<typeof Profile>
 export const LoggedOut = () => {
   const props = useProfileStoryProps({
     mainLayoutProps: MainLayoutLoggedOutStoryProps,
-    access: { isAuthenticated: false, canFollow: false },
+    access: { isAuthenticated: false, canBookmark: false, canFollow: false },
     mainColumnItems: [],
-    rightColumnItems: [],
-    overallCardItems: OverallCardStories.OverallCardStoryProps.items,
+    sideColumnItems: [],
+    overallCardItems: OverallCardStories.OverallCardNoCardStoryProps.items,
   })
 
   return <Profile {...props} />
@@ -42,14 +42,11 @@ export const LoggedOut = () => {
 
 export const LoggedIn: ProfileStory = () => {
   const props = useProfileStoryProps({
-    access: {
-      isAuthenticated: true,
-      canApprove: false,
-    },
+    access: { isAuthenticated: true },
     // resourceCardPropsList: getResourceCardsStoryProps(5, {access: {canLike: true}}),
     // collectionCardPropsList: getCollectionCardsStoryProps(5, {access: {canFollow: true}}),
     mainColumnItems: [],
-    rightColumnItems: [],
+    sideColumnItems: [],
   })
 
   return <Profile {...props} />
@@ -57,23 +54,7 @@ export const LoggedIn: ProfileStory = () => {
 
 export const Owner: ProfileStory = () => {
   const props = useProfileStoryProps({
-    access: {
-      isAuthenticated: true,
-      canEdit: true,
-      isCreator: true,
-      canApprove: false,
-      isPublisher: true,
-    },
-    data: {
-      // avatarUrl: undefined,
-      // backgroundUrl: undefined,
-    },
-    state: {
-      // isPublisher: false,
-      // isWaitingApproval: false,
-      // isElegibleForApproval: false,
-      showAccountApprovedSuccessAlert: true,
-    },
+    access: { isAuthenticated: true, canEdit: true, isCreator: true },
     resourceCardPropsList: getResourceCardsStoryProps(5, {
       access: {
         canDelete: true,
@@ -88,31 +69,24 @@ export const Owner: ProfileStory = () => {
       },
     }),
     mainColumnItems: [],
-    rightColumnItems: [],
-    jiraApprovalButton: {
-      isElegibleForApproval: true,
-      isWaitingApproval: false,
-    },
+    sideColumnItems: [],
   })
 
-  const [resourceCardPropsList /* , setResourceCardPropsList */] = useState(
-    props.resourceCardPropsList,
-  )
+  const [resourceCardPropsList, setResourceCardPropsList] = useState(props.resourceCardPropsList)
 
-  // resourceCardPropsList.map(r => {
-  //   r.onRemoveClick = () => {
-  //     action('onRemoveResourceClick')
-  //     setResourceCardPropsList(resourceCardPropsList.filter(x => x !== r))
-  //   }
-  // })
+  resourceCardPropsList.map(r => {
+    r.onRemoveClick = () => {
+      action('onRemoveResourceClick')
+      setResourceCardPropsList(resourceCardPropsList.filter(x => x !== r))
+    }
+  })
 
   return <Profile {...props} resourceCardPropsList={resourceCardPropsList} />
 }
 
 export const Admin: ProfileStory = () => {
   const props = useProfileStoryProps({
-    access: { isAdmin: true, canEdit: true, isCreator: false, canApprove: true },
-    state: { isPublisher: false },
+    access: { isAdmin: true, canEdit: true, isCreator: false },
     resourceCardPropsList: getResourceCardsStoryProps(5, {
       access: {
         canDelete: true,
@@ -126,7 +100,7 @@ export const Admin: ProfileStory = () => {
       },
     }),
     mainColumnItems: [],
-    rightColumnItems: [],
+    sideColumnItems: [],
   })
   return <Profile {...props} />
 }

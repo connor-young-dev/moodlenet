@@ -2,30 +2,26 @@ import CompressionPlugin from 'compression-webpack-plugin'
 import CopyPlugin from 'copy-webpack-plugin'
 import HtmlWebPackPlugin from 'html-webpack-plugin'
 import { createRequire } from 'module'
-import { dirname, resolve } from 'path'
+import { resolve } from 'path'
 // import ResolveTypeScriptPlugin from 'resolve-typescript-plugin'
 import { fileURLToPath } from 'url'
 import type { Configuration } from 'webpack'
 import webpack from 'webpack'
 import WebpackDevServer from 'webpack-dev-server'
-import type { WebappPluginItem } from '../../common/types.mjs'
+import { getAliases, getPkgPlugins } from './generated-files.mjs'
 // import VirtualModulesPlugin from 'webpack-virtual-modules'
-
-const __dirname = dirname(fileURLToPath(import.meta.url))
+const __dirname = fileURLToPath(new URL('.', import.meta.url))
 const require = createRequire(import.meta.url)
 const NodePolyfillPlugin = require('node-polyfill-webpack-plugin')
 // const ResolveTypeScriptPlugin = require('resolve-typescript-plugin').default
 const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin')
 // const ReactRefreshTypeScript = require('react-refresh-typescript')
 // const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin')
-const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer')
+// const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 // const { jsonBeautify } = require('beautify-json');
-const IS_ENV_DEV = process.env.NODE_ENV === 'development'
-export function getWp(
-  cfg: {
-    alias: any
-    pkgPlugins: WebappPluginItem<any>[]
-  } & (
+
+export async function getWp(
+  cfg:
     | {
         mode: 'prod'
         buildFolder: string
@@ -34,13 +30,12 @@ export function getWp(
         mode: 'dev-server'
         port: number
         proxy: string
-      }
-  ),
+      },
 ) {
   const isDevServer = cfg.mode === 'dev-server'
   const mode: Configuration['mode'] = isDevServer ? 'development' : 'production'
-  const alias = cfg.alias
-  const pkgPlugins = cfg.pkgPlugins
+  const alias = await getAliases()
+  const pkgPlugins = await getPkgPlugins()
   const config: Configuration = {
     stats: isDevServer ? 'normal' : 'errors-only',
     mode,
@@ -54,7 +49,7 @@ export function getWp(
     context: resolve(__dirname, '..', '..', '..'),
     watch: isDevServer,
     watchOptions: {
-      aggregateTimeout: 2000,
+      aggregateTimeout: 10,
       followSymlinks: true,
     },
     // experiments: {
@@ -274,21 +269,14 @@ export function getWp(
                 presets: [
                   require.resolve('@babel/preset-env'),
                   require.resolve('@babel/preset-modules'),
+                  // require.resolve('@babel/preset-typescript'),
+                  // require.resolve('@babel/plugin-transform-modules-commonjs'),
                   [
                     require.resolve('@babel/preset-react'),
                     { development: isDevServer, runtime: 'automatic' },
                   ],
                 ],
-                plugins: [
-                  [
-                    require.resolve('babel-plugin-direct-import'),
-                    {
-                      modules: ['@mui/system', '@mui/material', '@mui/icons-material'],
-                    },
-                  ],
-                  isDevServer && require.resolve('react-refresh/babel'),
-                  // isDevServer && require.resolve('react-hot-loader/babel'),
-                ].filter(Boolean),
+                plugins: [isDevServer && require.resolve('react-refresh/babel')].filter(Boolean),
               },
             },
           ], //[isDevelopment ? 'reverse' : 'slice'](), //https://github.com/ezolenko/rollup-plugin-typescript2/issues/256#issuecomment-1126969565
@@ -297,20 +285,7 @@ export function getWp(
     },
     plugins: [
       new NodePolyfillPlugin({
-        includeAliases: [
-          'console',
-          'process',
-          'assert',
-          'buffer',
-          'events',
-          'querystring',
-          'timers',
-          'util',
-          'path',
-          'url',
-          'constants',
-          'crypto',
-        ],
+        includeAliases: ['console', 'process'],
       }),
       new webpack.NormalModuleReplacementPlugin(/^node:/, resource => {
         // resource.request = resource.request.replace(/^node:/, '')
@@ -337,31 +312,25 @@ export function getWp(
         filename: 'index.html',
         publicPath: '/',
       }),
-      !(isDevServer || IS_ENV_DEV) &&
-        new CompressionPlugin({
-          test: /\.js(\?.*)?$/i,
-        }),
+      new CompressionPlugin({
+        test: /\.js(\?.*)?$/i,
+      }),
       new CopyPlugin({
-        patterns: [{ from: './_redirects' }, { from: './public/favicon.ico' }],
+        patterns: [{ from: './_redirects' }],
       }),
-      new BundleAnalyzerPlugin({
-        analyzerMode: isDevServer ? 'server' : 'static',
-        openAnalyzer: isDevServer,
-        reportFilename: 'webpack-bundle-analyzer-report.html',
-        generateStatsFile: !isDevServer,
-        statsFilename: 'webpack-bundle-analyzer-stats.json',
-      }),
+      // new BundleAnalyzerPlugin({
+      //   analyzerMode: 'json',
+      // }),
       // virtualModules,
     ].filter(Boolean),
   }
-  const wp = webpack(config, err => {
-    console.error(`WP ERROR`, err)
+  const wp = webpack(config, _err => {
+    // a cb .. otherways err:DEP_WEBPACK_WATCH_WITHOUT_CALLBACK
   })
 
   if (isDevServer) {
     const server = new WebpackDevServer(config.devServer, wp)
     server.startCallback(() => void 0)
   }
-
   return wp
 }

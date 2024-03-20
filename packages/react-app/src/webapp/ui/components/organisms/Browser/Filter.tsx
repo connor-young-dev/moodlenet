@@ -1,4 +1,4 @@
-// import { ArrowDropDown } from '@mui/icons-material'
+// import { ArrowDropDown } from '@material-ui/icons'
 // import { AddonItem, FloatingMenu, PrimaryButton, SecondaryButton } from '@moodlenet/component-library'
 // import { FC } from 'react'
 

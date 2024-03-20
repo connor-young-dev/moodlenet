@@ -1,8 +1,7 @@
-import type { AddOnMap } from '@moodlenet/core/lib'
 import { useMemo } from 'react'
-import { createPlugin } from '../../../../../web-lib/create-plugin.mjs'
 // import { Link } from '../../../../elements/link'
 // import { RegistryEntry } from '../../../../main-lib/registry'
+import { createHookPlugin } from '../../../../../web-lib/hook-plugin.mjs'
 import { useMainLayoutProps } from '../../../layout/MainLayout/MainLayoutHooks.mjs'
 import type { AdminSettingsItem, AdminSettingsProps } from '../AdminSettings.js'
 import { AppearanceContainer } from '../Appearance/AppearanceContainer.js'
@@ -27,29 +26,23 @@ const localAdminSettingsItems: AdminSettingsItem[] = [
   // },
 ]
 
-export const AdminSettingsPagePlugins = createPlugin<{
-  adminSettingsSection?: AddOnMap<AdminSettingsSectionItem>
-  denyAccess?: boolean
-}>()
+export const AdminSettingsPagePlugins = createHookPlugin<{
+  adminSettingsSection: AdminSettingsSectionItem
+}>({ adminSettingsSection: null })
 
-export const useAdminSettingsProps = (): {
-  adminSettingsProps: AdminSettingsProps
-  denyAccess: boolean
-} => {
-  const plugins = AdminSettingsPagePlugins.usePluginHooks()
+export const useAdminSettingsProps = (): AdminSettingsProps => {
+  const [addons] = AdminSettingsPagePlugins.useHookPlugin()
   const mainLayoutProps = useMainLayoutProps()
 
   const settingsItems = useMemo<AdminSettingsItem[]>(() => {
-    return localAdminSettingsItems.concat(plugins.getKeyedAddons('adminSettingsSection'))
-  }, [plugins])
+    return localAdminSettingsItems.concat(addons.adminSettingsSection)
+  }, [addons.adminSettingsSection])
 
-  const denyAccess = plugins.results.map(({ result: { denyAccess } }) => denyAccess).includes(true)
-  const adminSettings = useMemo(() => {
-    const adminSettingsProps: AdminSettingsProps = {
+  const settingsProps = useMemo<AdminSettingsProps>(() => {
+    return {
       mainLayoutProps,
       settingsItems,
     }
-    return { adminSettingsProps, denyAccess }
-  }, [mainLayoutProps, settingsItems, denyAccess])
-  return adminSettings
+  }, [mainLayoutProps, settingsItems])
+  return settingsProps
 }

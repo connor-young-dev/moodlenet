@@ -1,3 +1,4 @@
+import { instanceDomain } from '@moodlenet/core'
 import type { JwtToken } from '@moodlenet/crypto/server'
 import * as crypto from '@moodlenet/crypto/server'
 import { getMyRpcBaseUrl } from '@moodlenet/http-server/server'
@@ -48,7 +49,7 @@ export async function signup(req: SignupReq) {
   const mUser = await store.getByEmail(req.email)
 
   if (mUser) {
-    return { success: false, msg: 'Email already exists' } as const
+    return { success: false, msg: 'email exists' } as const
   }
   // shell.log('debug', { req })
   const confirmEmailPayload: ConfirmEmailPayload = {
@@ -73,8 +74,8 @@ export async function signup(req: SignupReq) {
   const html = dot.compile(templates['new-user-request'])(newUserRequestEmailTemplateVars)
   shell.call(send)({
     emailObj: {
-      title: `Welcome to ${orgData.data.instanceName} 🎉`,
-      subject: `Welcome to ${orgData.data.instanceName} 🎉`,
+      title: `Welcome to ${instanceDomain} 🎉`,
+      subject: `Welcome to ${instanceDomain} 🎉`,
       to: req.email,
       html,
     },
@@ -314,7 +315,7 @@ export async function userSendsMessageToWebUser({
   title,
   message,
   toWebUser,
-}: WebUserEvents['request-send-message-to-web-user']) {
+}: WebUserEvents['send-message-to-web-user']) {
   const messageBody = message.html || message.text
   await sendMessageToWebUser({
     subject,

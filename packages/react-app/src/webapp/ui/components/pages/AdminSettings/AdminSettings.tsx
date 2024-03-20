@@ -15,8 +15,8 @@ export type AdminSettingsProps = {
 }
 
 export const AdminSettings: FC<AdminSettingsProps> = ({ mainLayoutProps, settingsItems }) => {
-  const [currSettingsItemKey, chooseSettingsItemKey] = useState(settingsItems[0]?.key)
-  const CurrentContentComponent = settingsItems.find(_ => _.key === currSettingsItemKey)?.Content
+  const [currSettingsItem, chooseSettingsItem] = useState(settingsItems[0])
+
   return (
     <MainLayout
       {...mainLayoutProps}
@@ -29,10 +29,8 @@ export const AdminSettings: FC<AdminSettingsProps> = ({ mainLayoutProps, setting
           <div className="menu-container" role="navigation">
             <Card role="navigation" className="menu">
               {settingsItems.map(settingsItem => {
-                const isCurrent = settingsItem.key === currSettingsItemKey
-                const onClick = isCurrent
-                  ? undefined
-                  : () => chooseSettingsItemKey(settingsItem.key)
+                const isCurrent = JSON.stringify(settingsItem) === JSON.stringify(currSettingsItem)
+                const onClick = isCurrent ? undefined : () => chooseSettingsItem(settingsItem)
 
                 return (
                   <div
@@ -52,9 +50,9 @@ export const AdminSettings: FC<AdminSettingsProps> = ({ mainLayoutProps, setting
             </Card>
           </div>
         }
-        {CurrentContentComponent && (
-          <div className="content" key={currSettingsItemKey}>
-            <CurrentContentComponent />
+        {currSettingsItem && (
+          <div className="content" key={currSettingsItem.key}>
+            {currSettingsItem ? <currSettingsItem.Content /> : <></>}
             {/* {ctxElement} */}
           </div>
         )}

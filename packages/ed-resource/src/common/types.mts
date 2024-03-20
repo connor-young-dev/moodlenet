@@ -1,46 +1,38 @@
 import type { IconTextOptionProps, TextOptionProps } from '@moodlenet/component-library'
 import { getDomainUrl } from '@moodlenet/component-library'
-import type { StateName } from '@moodlenet/core-domain/resource'
 import type { Href } from '@moodlenet/react-app/common'
 // import { AuthDataRpc } from '@moodlenet/web-user/common'
 import type { AssetInfo } from '@moodlenet/component-library/common'
-import type { RpcFile } from '@moodlenet/core'
-import type { LearningOutcome, LearningOutcomeOption } from '@moodlenet/ed-meta/common'
-import type { ResourceExposeType, WebappConfigsRpc } from './expose-def.mjs'
-import type { ValidationSchemas } from './validationSchema.mjs'
+import type { SchemaOf } from 'yup'
+import { mixed, object, string } from 'yup'
+import type { ResourceExposeType } from './expose-def.mjs'
 export type EdResourceEntityNames = 'Resource'
+
 export type MyWebDeps = {
   me: ResourceExposeType
 }
 
 export type MainContextResource = {
-  configs: WebappConfigsRpc
-  validationSchemas: ValidationSchemas
+  rpcCaller: RpcCaller
 }
 
-export type ResourceMetaFormRpc = {
+export type ResourceFormRpc = {
   title: string
   description: string
   subject: string
   license: string
-  type: string
-  level: string
-  month: string
-  year: string
-  language: string
-  learningOutcomes: LearningOutcome[]
+  type: string | undefined
+  level: string | undefined
+  month: string | undefined
+  year: string | undefined
+  language: string | undefined
   // addToCollections: string[]
 }
 
-export type EditResourceFormRpc = {
-  meta?: ResourceMetaFormRpc
-  image?: { kind: 'remove' } | { kind: 'no-change' } | { kind: 'file'; file: [RpcFile] }
-}
-export type EditResourceRespRpc = { meta: ResourceMetaFormRpc; image: AssetInfo | null }
 export type ResourceDataRpc = {
-  id: string | null
+  id: string
   mnUrl: string
-  contentType: 'link' | 'file' | null
+  contentType: 'link' | 'file'
   image: AssetInfo | null
   subjectHref: Href | null
 
@@ -48,21 +40,9 @@ export type ResourceDataRpc = {
   downloadFilename: string | null // specificContentType: string // ex: url, pdf, doc...
 }
 
-export type AutofillState =
-  //| 'extracting-info'
-  'ai-generation' | 'ai-completed' | undefined // | 'ai-saved-generated-data'
-
-export type AutofillSuggestions = {
-  meta: null | Partial<ResourceFormProps>
-  // image: null | AssetInfo
-}
-
 export type ResourceStateRpc = {
   isPublished: boolean
-  // isUploaded: boolean
-  uploadProgress: number | 'N/A' | undefined
-  autofillSuggestions: null | AutofillSuggestions
-  autofillState: AutofillState
+  uploadProgress?: number
 }
 
 export type ResourceContributorRpc = {
@@ -73,77 +53,20 @@ export type ResourceContributorRpc = {
 }
 
 export type ResourceRpc = {
-  resourceForm: ResourceMetaFormRpc
+  resourceForm: ResourceFormRpc
   access: ResourceAccessRpc
-  state: {
-    value: StateName
-  } & Pick<ResourceStateRpc, 'isPublished' | 'autofillSuggestions'>
+  state: Pick<ResourceStateRpc, 'isPublished'>
   data: ResourceDataRpc
   contributor: ResourceContributorRpc
 }
 
-export type ResourceFormProps = {
-  title: string
-  description: string
-  subject: string
-  license: string
-  type: string
-  level: string
-  month: string
-  year: string
-  language: string
-  learningOutcomes: LearningOutcome[]
-  // addToCollections: string[]
-}
-
-export type ResourceDataProps = {
-  id: string | null
-  mnUrl: string
-  contentType: 'link' | 'file' | null
-  image: AssetInfo | null
-  subjectHref: Href | null
-
-  contentUrl: string | null
-  downloadFilename: string | null // specificContentType: string // ex: url, pdf, doc...
-}
-export type ResourceStateProps = {
-  isPublished: boolean
-  // isUploaded: boolean
-  uploadProgress: number | 'N/A' | undefined
-  autofillState: AutofillState
-  // autofillSu ggestions: null | AutofillSuggestions
-}
-export type ResourceCardDataProps = {
-  owner: {
-    displayName: string
-    avatar: string | null
-    profileHref: Href
-  }
-  resourceHomeHref: Href
-} & Pick<ResourceDataProps, 'image' | 'downloadFilename' | 'contentType' | 'contentUrl' | 'id'> &
-  Pick<ResourceFormProps, 'title'>
-export type ResourceAccessProps = {
-  isCreator: boolean
-  canEdit: boolean
-  canPublish: boolean
-  canDelete: boolean
-}
-export type EdMetaOptionsProps = {
-  typeOptions: TextOptionProps[]
-  monthOptions: TextOptionProps[]
-  yearOptions: string[]
-  languageOptions: TextOptionProps[]
-  levelOptions: TextOptionProps[]
-  licenseOptions: IconTextOptionProps[]
-  subjectOptions: TextOptionProps[]
-  learningOutcomeOptions: LearningOutcomeOption[]
-}
-export type ResourceContributorProps = {
-  avatarUrl: string | null
-  displayName: string
-  timeSinceCreation: string
-  creatorProfileHref: Href
-}
+export type ResourceFormProps = ResourceFormRpc
+export type ResourceDataProps = ResourceDataRpc
+export type ResourceStateProps = ResourceStateRpc
+export type ResourceCardDataProps = ResourceCardDataRpc
+export type ResourceAccessProps = ResourceAccessRpc
+export type EdMetaOptionsProps = EdMetaOptionsRpc
+export type ResourceContributorProps = ResourceContributorRpc
 
 export type ResourceProps = {
   resourceForm: ResourceFormProps
@@ -152,35 +75,26 @@ export type ResourceProps = {
   data: ResourceDataProps
   contributor: ResourceContributorProps
 }
-export type SavingState = 'not-saving' | 'saving' | 'save-done'
-export type SaveState = { form: SavingState; image: SavingState; content: SavingState }
 
 export type RpcCaller = {
-  create: (content: File | string, taskId: string) => Promise<{ _key: string }>
+  edit: (resourceKey: string, res: ResourceFormProps) => Promise<void>
   get: (resourceKey: string) => Promise<ResourceProps | null>
-  edit: (
+  _delete: (resourceKey: string) => Promise<void>
+  setImage: (resourceKey: string, file: File | undefined | null) => Promise<string | null>
+  setContent: (
     resourceKey: string,
-    res: Partial<EditResourceFormRpc>,
-    taskId: string,
-  ) => Promise<EditResourceRespRpc>
-  setIsPublished: (resourceKey: string, approve: boolean) => Promise<{ done: boolean }>
-  trash: (resourceKey: string) => Promise<void>
-  // setImage: (
-  //   resourceKey: string,
-  //   file: File | undefined | null,
-  //   rpcId: string,
-  // ) => Promise<string | null>
+    file: File | string | undefined | null,
+  ) => Promise<string | null>
+  setIsPublished: (resourceKey: string, approve: boolean) => Promise<void>
+  create: () => Promise<{ _key: string }>
 }
 export type ResourceActions = {
   publish: () => void
   unpublish: () => void
   editData: (values: ResourceFormProps) => void
   setImage: (image: File | undefined | null) => void
-  provideContent: (content: File | string) => void
+  setContent: (content: File | string | undefined | null) => void
   deleteResource(): void
-  startAutofill(): void
-  stopAutofill(): void
-  cancelUpload(): void
 }
 
 export type ResourceAccessRpc = {
@@ -190,6 +104,16 @@ export type ResourceAccessRpc = {
   canDelete: boolean
 }
 
+export type EdMetaOptionsRpc = {
+  typeOptions: TextOptionProps[]
+  monthOptions: TextOptionProps[]
+  yearOptions: string[]
+  languageOptions: TextOptionProps[]
+  levelOptions: TextOptionProps[]
+  licenseOptions: IconTextOptionProps[]
+  subjectOptions: TextOptionProps[]
+}
+
 export type ResourceCardDataRpc = {
   owner: {
     displayName: string
@@ -197,13 +121,13 @@ export type ResourceCardDataRpc = {
     profileHref: Href
   }
   resourceHomeHref: Href
-} & Pick<ResourceDataProps, 'image' | 'downloadFilename' | 'contentType' | 'contentUrl' | 'id'> &
+} & Pick<ResourceDataProps, 'image' | 'downloadFilename' | 'contentType' | 'id' | 'contentUrl'> &
   Pick<ResourceFormProps, 'title'>
 
 export type ResourceCardState = {
   // isSelected: boolean
   // selectionMode: boolean // When selection resources to be added to a collection
-} & Pick<ResourceStateProps, 'isPublished' | 'autofillState'>
+} & Pick<ResourceStateProps, 'isPublished'>
 
 export type ResourceCardActions = Pick<ResourceActions, 'publish' | 'unpublish'>
 
@@ -223,12 +147,13 @@ export type ResourceSearchResultRpc = {
   endCursor?: string
   list: { _key: string }[]
 }
+export type FilterTypeRpc = [prop: 'subject', equals: string][]
 export type SortTypeRpc = 'Relevant' | 'Popular' | 'Recent'
 export function isSortTypeRpc(_: any): _ is SortTypeRpc {
   return ['Relevant', 'Popular', 'Recent'].includes(_)
 }
 
-export const getResourceDomainName = (url: string): string | undefined => {
+export const getResourceDomainName = (url: string): string => {
   const domain = getDomainUrl(url)
   switch (domain) {
     case 'youtube.com':
@@ -237,19 +162,18 @@ export const getResourceDomainName = (url: string): string | undefined => {
     case 'vimeo.com':
       return 'vimeo'
     case undefined:
-      return 'unknown'
+      return 'invalid-link'
     default:
       return 'link'
   }
 }
 
 export const getResourceTypeInfo = (
-  isLinkOrFile: 'link' | 'file' | null,
+  isLikeOrFile: 'link' | 'file',
   filenameOrUrl: string | null,
 ): { typeName: string | null; typeColor: string | null } => {
-  if (!isLinkOrFile) return { typeName: null, typeColor: null }
   const resourceType =
-    (isLinkOrFile === 'file'
+    (isLikeOrFile === 'file'
       ? filenameOrUrl?.split('.').pop()
       : filenameOrUrl
       ? getResourceDomainName(filenameOrUrl)
@@ -305,3 +229,36 @@ export const getResourceTypeInfo = (
       return { typeName: resourceType, typeColor: '#15845A' }
   }
 }
+
+export const resourceValidationSchema: SchemaOf<ResourceFormProps> = object({
+  subject: string().required(/* t */ `Please select a subject`),
+  content: string().required(/* t */ `Please upload a content`),
+  license: string().required(/* t */ `Please provide a license`),
+  description: string().max(4096).min(3).required(/* t */ `Please provide a description`),
+  title: string().max(160).min(3).required(/* t */ `Please provide a title`),
+  language: string().optional(),
+  level: string().optional(),
+  month: string().optional(),
+  type: string().optional(),
+  visibility: mixed().required(/* t */ `Visibility is required`),
+  year: string().when('month', (month, schema) => {
+    return month ? schema.required(/* t */ `Please select a year`) : schema.optional()
+  }),
+})
+
+export const contentValidationSchema: SchemaOf<{ content: File | string | undefined | null }> =
+  object({
+    content: string().required(`Please provide a file or a link`),
+  })
+
+export const imageValidationSchema: SchemaOf<{ image: File | string | undefined | null }> = object({
+  image: mixed()
+    .test((v, { createError }) =>
+      v instanceof Blob && v.size > 5 * 1024 ** 2
+        ? createError({
+            message: /* t */ `The file is too big, reduce the size or provide a url`,
+          })
+        : true,
+    )
+    .optional(),
+})

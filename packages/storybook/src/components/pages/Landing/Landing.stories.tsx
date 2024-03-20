@@ -3,61 +3,17 @@ import { LandingResourceList } from '@moodlenet/ed-resource/ui'
 import { href } from '@moodlenet/react-app/common'
 import type { LandingProps } from '@moodlenet/react-app/ui'
 import { Landing } from '@moodlenet/react-app/ui'
-import { LandingProfileList, Leaderboard, PublishContent } from '@moodlenet/web-user/ui'
-import { linkTo } from '@storybook/addon-links'
-import type { Meta as ComponentMeta, StoryFn as ComponentStory } from '@storybook/react'
-import { getCollectionCardsStoryProps } from '../../../components/organisms/CollectionCard/CollectionCardProps.stories.props.js'
-import { getProfileCardsStoryProps } from '../../../components/organisms/ProfileCard/ProfileCardProps.stories.props.js'
-import { getResourceCardsStoryProps } from '../../../components/organisms/ResourceCard/ResourceCardProps.stories.props.js'
+import { LandingProfileList } from '@moodlenet/web-user/ui'
+import { action } from '@storybook/addon-actions'
+import type { ComponentMeta, ComponentStory } from '@storybook/react'
+import { getCollectionCardsStoryProps } from 'components/organisms/CollectionCard/CollectionCardProps.stories.js'
+import { getProfileCardsStoryProps } from 'components/organisms/ProfileCard/ProfileCardProps.stories.js'
+import { getResourceCardsStoryProps } from 'components/organisms/ResourceCard/ResourceCardProps.stories.js'
 import {
   MainLayoutLoggedInStoryProps,
   MainLayoutLoggedOutStoryProps,
 } from '../../layout/MainLayout/MainLayout.stories.js'
-import { getMainHeaderStoryProps } from '../../organisms/MainHeader/MainHeaderProps.stories.props.js'
 // import { href } from '../../../elements/link'
-
-const leaderboardContributors = [
-  {
-    avatarUrl:
-      'https://moodle.net/.pkg/@moodlenet/web-user/public/2022/02/02/10/38/39/147_rosmanitz.jpg',
-    points: 112982,
-    displayName: 'Krosmanitz',
-    profileHref: href('Pages/Profile/Default'),
-    subject: 'Mathematics',
-  },
-  {
-    avatarUrl:
-      'https://moodle.net/.pkg/@moodlenet/web-user/public/2023/04/06/10/03/42/761_Grasple_logo_G_Test.jpeg',
-    points: 89456,
-    displayName: 'Grasple - Open Education',
-    profileHref: href('Pages/Profile/Default'),
-    subject: 'Physics',
-  },
-  {
-    avatarUrl:
-      'https://moodle.net/.pkg/@moodlenet/web-user/public/2023/05/18/15/45/42/838_foto_rid_seria.jpeg',
-    points: 44234,
-    displayName: 'Carlo Cavicchioli',
-    profileHref: href('Pages/Profile/Default'),
-    subject: 'Chemistry',
-  },
-  {
-    avatarUrl:
-      'https://moodle.net/.pkg/@moodlenet/web-user/public/2023/05/29/17/33/21/516_YamnaProfile.jpg',
-    points: 10980,
-    displayName: 'Yamna Ettarres',
-    profileHref: href('Pages/Profile/Default'),
-    subject: 'Biology',
-  },
-  {
-    avatarUrl:
-      'https://moodle.net/.pkg/@moodlenet/web-user/public/2022/12/02/16/06/47/019_IMG_20190213_160443c.jpg',
-    points: 662,
-    displayName: 'Carrie Alena',
-    profileHref: href('Pages/Profile/Default'),
-    subject: 'Environmental Science',
-  },
-]
 
 const meta: ComponentMeta<typeof Landing> = {
   title: 'Pages/Landing',
@@ -73,12 +29,12 @@ export const LandingLoggedOutStoryProps: LandingProps = {
   mainLayoutProps: MainLayoutLoggedOutStoryProps,
   title: 'Find, share and curate open educational resources',
   subtitle: 'Search for resources, subjects, collections or people',
+  search: action('search'),
   mainColumnItems: [
     {
       Item: () => (
         <LandingResourceList
           searchResourcesHref={href('Pages/Search')}
-          hasSetInterests={false}
           resourceCardPropsList={getResourceCardsStoryProps(15, {
             access: {
               // isAuthenticated: false,
@@ -96,7 +52,6 @@ export const LandingLoggedOutStoryProps: LandingProps = {
       Item: () => (
         <LandingCollectionList
           searchCollectionsHref={href('Pages/Search')}
-          hasSetInterests={false}
           collectionCardPropsList={getCollectionCardsStoryProps(15, {
             state: {
               numResources: 2,
@@ -116,7 +71,6 @@ export const LandingLoggedOutStoryProps: LandingProps = {
       Item: () => (
         <LandingProfileList
           searchAuthorsHref={href('Pages/Search')}
-          hasSetInterests={false}
           profilesPropsList={getProfileCardsStoryProps(15, {
             access: { isAuthenticated: false },
           })}
@@ -124,50 +78,17 @@ export const LandingLoggedOutStoryProps: LandingProps = {
       ),
       key: 'people-card-list',
     },
-    {
-      Item: () => <Leaderboard contributors={leaderboardContributors} />,
-      key: 'leaderboard',
-    },
-  ],
-  headerCardItems: [
-    {
-      Item: () => (
-        <PublishContent
-          publishContentHrefs={{
-            loginHref: href('Pages/Access/Login/Default'),
-            signUpHref: href('Pages/Access/SignUp/Default'),
-            createResource: linkTo('Pages/Resource', 'New'),
-            createCollection: linkTo('Pages/Collection', 'New'),
-          }}
-          isAuthenticated={false}
-        />
-      ),
-      key: 'publish-content',
-    },
   ],
 }
 
 export const LandingLoggedInStoryProps: LandingProps = {
   ...LandingLoggedOutStoryProps,
-  mainLayoutProps: {
-    ...MainLayoutLoggedInStoryProps,
-    headerProps: getMainHeaderStoryProps({ isAuthenticated: true, hasAlerts: true }),
-  },
+  mainLayoutProps: MainLayoutLoggedInStoryProps,
   mainColumnItems: [
-    // {
-    //   Item: () => (
-    //     <InterestInfo
-    //       userSettingHref={href('Pages/Settings/Default')}
-    //       doNotShowAgain={action('doNotShowAgain')}
-    //     />
-    //   ),
-    //   key: 'interest-info',
-    // },
     {
       Item: () => (
         <LandingResourceList
           searchResourcesHref={href('Pages/Search')}
-          hasSetInterests={true}
           resourceCardPropsList={getResourceCardsStoryProps(15, {
             state: {
               // liked: true,
@@ -186,7 +107,6 @@ export const LandingLoggedInStoryProps: LandingProps = {
       Item: () => (
         <LandingCollectionList
           searchCollectionsHref={href('Pages/Search')}
-          hasSetInterests={true}
           collectionCardPropsList={getCollectionCardsStoryProps(15, {
             state: {
               // followed: true,
@@ -204,7 +124,6 @@ export const LandingLoggedInStoryProps: LandingProps = {
       Item: () => (
         <LandingProfileList
           searchAuthorsHref={href('Pages/Search')}
-          hasSetInterests={true}
           profilesPropsList={getProfileCardsStoryProps(15, {
             state: {
               // followed: true,
@@ -214,26 +133,6 @@ export const LandingLoggedInStoryProps: LandingProps = {
         />
       ),
       key: 'people-card-list',
-    },
-    {
-      Item: () => <Leaderboard contributors={leaderboardContributors} />,
-      key: 'leaderboard',
-    },
-  ],
-  headerCardItems: [
-    {
-      Item: () => (
-        <PublishContent
-          publishContentHrefs={{
-            loginHref: href('Pages/Access/Login/Default'),
-            signUpHref: href('Pages/Access/SignUp/Default'),
-            createResource: linkTo('Pages/Resource', 'New'),
-            createCollection: linkTo('Pages/Collection', 'New'),
-          }}
-          isAuthenticated={true}
-        />
-      ),
-      key: 'publish-content',
     },
   ],
 }
@@ -262,7 +161,6 @@ export const Owner: LandingStory = () => {
         Item: () => (
           <LandingResourceList
             searchResourcesHref={href('Pages/Search')}
-            hasSetInterests={true}
             resourceCardPropsList={getResourceCardsStoryProps(15, {
               state: {
                 isPublished: true,
@@ -283,7 +181,6 @@ export const Owner: LandingStory = () => {
         Item: () => (
           <LandingCollectionList
             searchCollectionsHref={href('Pages/Search')}
-            hasSetInterests={true}
             collectionCardPropsList={getCollectionCardsStoryProps(15, {
               state: {
                 isPublished: true,
@@ -303,7 +200,6 @@ export const Owner: LandingStory = () => {
         Item: () => (
           <LandingProfileList
             searchAuthorsHref={href('Pages/Search')}
-            hasSetInterests={true}
             profilesPropsList={getProfileCardsStoryProps(15, {
               access: {
                 isCreator: true,
@@ -312,10 +208,6 @@ export const Owner: LandingStory = () => {
           />
         ),
         key: 'people-card-list',
-      },
-      {
-        Item: () => <Leaderboard contributors={leaderboardContributors} />,
-        key: 'leaderboard',
       },
     ],
   }

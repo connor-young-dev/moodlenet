@@ -1,7 +1,7 @@
 import type { ResourceFormProps } from '@moodlenet/ed-resource/common'
 import type { ResourceProps } from '@moodlenet/ed-resource/ui'
 import { Resource } from '@moodlenet/ed-resource/ui'
-import type { Meta as ComponentMeta, StoryFn as ComponentStory } from '@storybook/react'
+import type { ComponentMeta, ComponentStory } from '@storybook/react'
 import { useResourceStoryProps } from './ResourceProps.stories.js'
 // import { href } from '../../../elements/link'
 
@@ -19,10 +19,7 @@ type ResourceStory = ComponentStory<typeof Resource>
 
 export const LoggedOut: ResourceStory = () => {
   const props: ResourceProps = useResourceStoryProps({
-    data: {
-      contentType: 'link',
-      contentUrl: 'https://learngermanwithanja.com/the-german-accusative-case/#t-1632135010328',
-    },
+    data: {},
     state: {},
     actions: {},
     access: {},
@@ -36,7 +33,7 @@ export const LoggedIn: ResourceStory = () => {
   const props = useResourceStoryProps({
     data: {
       contentType: 'link',
-      contentUrl: 'https://learngermanwithanja.com/the-german-accusative-case/#t-1632135010328',
+      contentUrl: 'https://www.google.com',
     },
     state: {},
     actions: {},
@@ -61,16 +58,18 @@ export const NewResourceProps: Partial<ResourceFormProps> = {
   month: '',
   year: '',
   type: '',
-  learningOutcomes: [],
 }
 
 export const New: ResourceStory = () => {
   const props = useResourceStoryProps({
-    // data: {
-    //   image: null,
-    // },
+    data: {
+      downloadFilename: undefined,
+      contentUrl: undefined,
+      image: undefined,
+      // numLikes: 0,
+    },
     resourceForm: NewResourceProps,
-    startWithoutImage: true,
+
     state: {
       isPublished: false,
     },
@@ -79,7 +78,6 @@ export const New: ResourceStory = () => {
       isCreator: true,
       canEdit: true,
       canPublish: true,
-      canDelete: true,
     },
   })
   return <Resource {...props} />
@@ -87,17 +85,10 @@ export const New: ResourceStory = () => {
 
 export const Creator: ResourceStory = () => {
   const props = useResourceStoryProps({
-    saveState: {},
-    data: {
-      contentType: 'file',
-      contentUrl:
-        'https://moodle.net/.pkg/@moodlenet/ed-resource/dl/ed-resource/1Vj2B7Mj/557_Sujeto_y_Predicado.pdf',
-      downloadFilename: 'Ecosystem_Conservation_Restoration.mbz',
+    data: {},
+    state: {
+      isPublished: false,
     },
-    resourceForm: {
-      // level: undefined,
-    },
-    state: {},
     actions: {},
     access: {
       isCreator: true,

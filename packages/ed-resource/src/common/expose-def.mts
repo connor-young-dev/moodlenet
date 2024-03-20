@@ -1,45 +1,43 @@
 import type { PkgExposeDef, RpcFile } from '@moodlenet/core'
 import type {
-  EditResourceFormRpc,
-  EditResourceRespRpc,
+  FilterTypeRpc,
+  ResourceFormRpc,
   ResourceRpc,
   ResourceSearchResultRpc,
   SortTypeRpc,
 } from './types.mjs'
-import type { ValidationsConfig } from './validationSchema.mjs'
-export type WebappConfigsRpc = { validations: ValidationsConfig }
 export type ResourceExposeType = PkgExposeDef<{
   rpc: {
-    'webapp/get-configs'(): Promise<WebappConfigsRpc>
+    // WEBAPP specific
     'webapp/set-is-published/:_key'(
       body: { publish: boolean },
       params: { _key: string },
-    ): Promise<{ done: boolean }>
+    ): Promise<void>
     'webapp/get/:_key'(body: null, params: { _key: string }): Promise<ResourceRpc | null>
-    'webapp/:action(cancel|start)/meta-autofill/:_key'(
-      body: null,
-      params: { _key: string; action: 'cancel' | 'start' },
-    ): Promise<{ done: boolean }>
-    'webapp/edit/:_key'(
-      body: { form: EditResourceFormRpc },
+    'webapp/edit/:_key'(body: { values: ResourceFormRpc }, params: { _key: string }): Promise<void>
+    'webapp/create'(): Promise<{ _key: string }>
+    'webapp/delete/:_key'(body: null, params: { _key: string }): Promise<void>
+    'webapp/upload-image/:_key'(
+      body: { file: [RpcFile | undefined | null] },
       params: { _key: string },
-    ): Promise<EditResourceRespRpc | null>
-    'webapp/trash/:_key'(body: null, params: { _key: string }): Promise<void>
-    'webapp/create'(body: { content: [RpcFile | string] }): Promise<{ resourceKey: string } | null>
+    ): Promise<string | null>
+    'webapp/upload-content/:_key'(
+      body: { content: [RpcFile | string | null | undefined] },
+      params: { _key: string },
+    ): Promise<string | null>
+    // OTHER
     'webapp/search'(
-      body: undefined,
+      body:
+        | undefined
+        | {
+            filters?: FilterTypeRpc
+          },
       params: undefined,
       query: {
         sortType?: SortTypeRpc
-        filterSubjects?: string
-        filterTypes?: string
-        filterLevels?: string
-        filterLanguages?: string
-        filterLicenses?: string
         text?: string
         after?: string
         limit?: number
-        filterAs: 'strict' | 'loose'
       },
     ): Promise<ResourceSearchResultRpc>
     'webapp/get-resources-count-in-subject/:subjectKey'(

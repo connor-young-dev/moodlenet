@@ -1,15 +1,14 @@
-import {
-  getValidationSchemas,
-  type CollectionAccessProps,
-  type CollectionActions,
-  type CollectionDataProps,
-  type CollectionFormProps,
-  type CollectionStateProps,
+import type {
+  CollectionAccessProps,
+  CollectionActions,
+  CollectionDataProps,
+  CollectionFormProps,
+  CollectionStateProps,
 } from '@moodlenet/collection/common'
 import { action } from '@storybook/addon-actions'
-import type { Meta as ComponentMeta } from '@storybook/react'
-import { useState } from 'react'
+import type { ComponentMeta } from '@storybook/react'
 import type { PartialDeep } from 'type-fest'
+// import { useEffect } from 'react'
 import type { AnySchema, SchemaOf } from 'yup'
 import { addMethod, boolean, mixed, MixedSchema, object, string } from 'yup'
 // import { href } from '../../../elements/link'
@@ -34,8 +33,8 @@ import type { ResourceCardProps } from '@moodlenet/ed-resource/ui'
 import type { ProxyProps } from '@moodlenet/react-app/ui'
 import type { BookmarkButtonProps, SmallFollowButtonProps } from '@moodlenet/web-user/ui'
 import { BookmarkButton, FollowButton, SmallFollowButton } from '@moodlenet/web-user/ui'
+import { getResourceCardsStoryProps } from 'components/organisms/ResourceCard/ResourceCardProps.stories.js'
 import { useFormik } from 'formik'
-import { getResourceCardsStoryProps } from '../../../components/organisms/ResourceCard/ResourceCardProps.stories.props.js'
 import {
   MainLayoutLoggedInStoryProps,
   MainLayoutLoggedOutStoryProps,
@@ -96,18 +95,10 @@ export const validationSchema: SchemaOf<CollectionFormProps> = object({
         : true,
     )
     .optional(),
-  language: string()
-    .transform(value => value || null)
-    .nullable(),
-  level: string()
-    .transform(value => value || null)
-    .nullable(),
-  month: string()
-    .transform(value => value || null)
-    .nullable(),
-  type: string()
-    .transform(value => value || null)
-    .nullable(),
+  language: string().optional(),
+  level: string().optional(),
+  month: string().optional(),
+  type: string().optional(),
   visibility: mixed().required(/* t */ `Visibility is required`),
   year: string().when('month', (month, schema) => {
     return month ? schema.required(/* t */ `Please select a year`) : schema.optional()
@@ -161,17 +152,14 @@ export const useCollectionStoryProps = (
     id: 'qjnwglkd69io-sports',
     mnUrl: 'collection.url',
     ...overrides?.data,
-    image:
-      overrides?.data?.image === null
-        ? null
-        : {
-            location:
-              'https://images.unsplash.com/photo-1543964198-d54e4f0e44e3?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2670&q=80',
-            credits: {
-              owner: { name: 'Leonard Rush', url: 'https://unsplash.com/@lennyrush' },
-              provider: { name: 'Unsplash', url: 'https://unsplash.com' },
-            },
-          },
+    image: {
+      location:
+        'https://images.unsplash.com/photo-1543964198-d54e4f0e44e3?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2670&q=80',
+      credits: {
+        owner: { name: 'Leonard Rush', url: 'https://unsplash.com/@lennyrush' },
+        provider: { name: 'Unsplash', url: 'https://unsplash.com' },
+      },
+    },
   }
 
   const collectionForm: CollectionFormProps = {
@@ -181,24 +169,16 @@ export const useCollectionStoryProps = (
     // ...overrides?.collectionForm,
   }
 
-  const [isPublished, setIsPublished] = useState(
-    overrides?.state?.isPublished !== undefined ? overrides?.state?.isPublished : true,
-  )
-
   const state: CollectionStateProps = {
-    isPublished: isPublished,
+    isPublished: true,
     numResources: 12,
   }
 
   const actions: CollectionActions = {
     deleteCollection: action('deleteCollection'),
     editData: action('editData'),
-    publish: () => {
-      setIsPublished(true)
-    },
-    unpublish: () => {
-      setIsPublished(false)
-    },
+    publish: action('publish'),
+    unpublish: action('unpublish'),
     setImage: action('setImage'),
     removeResource: action('removeResource'),
     ...overrides?.actions,
@@ -221,7 +201,6 @@ export const useCollectionStoryProps = (
     ...overrides?.smallFollowButtonProps,
     isAuthenticated,
   }
-
   const bookmarkButtonProps: BookmarkButtonProps = {
     bookmarked: true,
     canBookmark: true,
@@ -229,6 +208,8 @@ export const useCollectionStoryProps = (
     ...overrides?.bookmarkButtonProps,
     isAuthenticated,
   }
+  const isPublished =
+    overrides?.state?.isPublished !== undefined ? overrides?.state?.isPublished : true
 
   const mainCollectionCardSlots: MainCollectionCardSlots = {
     mainColumnItems: [],
@@ -294,11 +275,13 @@ export const useCollectionStoryProps = (
 
       data: data,
       collectionForm: collectionForm,
-      validationSchemas: getValidationSchemas({ imageMaxUploadSize: 1024 * 1024 * 0.5 }),
+      validationSchema: validationSchema,
 
       state: state,
       actions: actions,
       access: access,
+      isSaving: false,
+      isEditingAtStart: false,
     },
     { ...overrides },
   )

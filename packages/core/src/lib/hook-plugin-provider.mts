@@ -1,16 +1,14 @@
-export type AddOnMap<T> = { [name in string]: T | null | undefined | false }
+export type AddOnMap<T> = { [name in string]: T | null | undefined }
 export type PluginHook<C, R> = (context: C) => R
-type PluginHandle<R> = {
-  results: {
-    ownerId: string
-    result: R
-  }[]
-  getKeyedAddons: <F extends keyof R>(field: F) => KeydMappedAddon<R[F]>[]
-}
-
 export type Plugin<R = void, C = void> = {
   register: (hook: PluginHook<C, R>) => void
-  usePluginHooks: (context: C) => PluginHandle<R>
+  usePluginHooks: (context: C) => {
+    results: {
+      ownerId: string
+      result: R
+    }[]
+    getKeyedAddons: <F extends keyof R>(field: F) => KeydMappedAddon<R[F]>[]
+  }
 }
 type KeydAddon<T> = T & { key: string }
 type KeydMappedAddon<A> = A extends AddOnMap<infer T> ? KeydAddon<T> : KeydAddon<A>
@@ -48,9 +46,7 @@ export function pluginCreator(getPluginOwnerId: (hook: PluginHook<any, any>) => 
             const addonsMap = result[field]
             if (typeof addonsMap !== 'object' || !addonsMap) return []
             return Object.entries(addonsMap).reduce((acc, [addonName, addon]) => {
-              if (addon) {
-                acc.push({ ...addon, key: `${ownerId}::${addonName}` })
-              }
+              addon && acc.push({ ...addon, key: `${ownerId}::${addonName}` })
               return acc
             }, [] as KeydMappedAddon<R[F]>[])
           })

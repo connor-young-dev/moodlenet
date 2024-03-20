@@ -1,10 +1,8 @@
-import type { Meta as ComponentMeta, StoryFn as ComponentStory } from '@storybook/react'
+import type { ComponentMeta, ComponentStory } from '@storybook/react'
 // import { href } from '../../../../elements/link'
-// import { Grade, LibraryBooks, PermIdentity } from '@mui/icons-material'
-import { FilterNone } from '@mui/icons-material'
+// import { Grade, LibraryBooks, PermIdentity } from '@material-ui/icons'
+import { FilterNone, Grade, PermIdentity } from '@mui/icons-material'
 import { href } from '../../../../../common/lib.mjs'
-import { ReactComponent as LeafIcon } from '../../../assets/icons/leaf.svg'
-import { ReactComponent as PersonIcon } from '../../../assets/icons/profile.svg'
 import type { OverallCardProps } from './OverallCard.js'
 import { OverallCard } from './OverallCard.js'
 
@@ -26,43 +24,18 @@ const meta: ComponentMeta<typeof OverallCard> = {
       </div>
     ),
   ],
-  parameters: {
-    layout: 'centered',
-  },
 }
 
 export const OverallCardStoryProps: OverallCardProps = {
   items: [
-    {
-      Icon: PersonIcon,
-      className: 'followers',
-      href: href('Pages/Followers'),
-      name: 'Followers',
-      value: 25,
-    },
-    {
-      Icon: PersonIcon,
-      className: 'following',
-      href: href('Pages/Following'),
-      name: 'Following',
-      value: 97,
-    },
-    { Icon: FilterNone, className: 'resources', name: 'Resources', value: 23 },
+    { Icon: PermIdentity, href: href('Pages/Followers'), name: 'Followers', value: 25 },
+    { Icon: Grade, name: 'Kudos', value: 121 },
+    { Icon: FilterNone, name: 'Resources', value: 23 },
   ],
 }
 
 export const OverallCardNoCardStoryProps: OverallCardProps = {
-  items: [
-    {
-      Icon: PersonIcon,
-      className: 'followers',
-      href: href('Pages/Followers'),
-      name: 'Followers',
-      value: 25,
-    },
-    { Icon: LeafIcon, name: 'Leaves', className: 'leaves', value: 43212 },
-    { Icon: FilterNone, className: 'resources', name: 'Resources', value: 23 },
-  ],
+  ...OverallCardStoryProps,
   noCard: true,
 }
 
@@ -73,13 +46,13 @@ export const OverallCardIconsStoryProps: OverallCardProps = {
 
 const OverallCardStory: ComponentStory<typeof OverallCard> = args => <OverallCard {...args} />
 
-export const Default: typeof OverallCardStory = OverallCardStory.bind({})
+export const Default = OverallCardStory.bind({})
 Default.args = OverallCardStoryProps
 
-export const NoCard: typeof OverallCardStory = OverallCardStory.bind({})
+export const NoCard = OverallCardStory.bind({})
 NoCard.args = OverallCardNoCardStoryProps
 
-export const Icons: typeof OverallCardStory = OverallCardStory.bind({})
+export const Icons = OverallCardStory.bind({})
 Icons.args = OverallCardIconsStoryProps
 
 export default meta

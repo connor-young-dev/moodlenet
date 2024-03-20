@@ -1,5 +1,5 @@
 import type { AddonItem } from '@moodlenet/component-library'
-import { SecondaryButton, SimpleDropdown, sortAddonItems } from '@moodlenet/component-library'
+import { SecondaryButton, SimpleDropdown } from '@moodlenet/component-library'
 import type { ComponentType, FC } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import './Browser.scss'
@@ -10,11 +10,12 @@ export type BrowserMainColumnItemBase = {
   showHeader?: boolean
 }
 
-export type MainColumItem = Omit<AddonItem, 'Item'> & {
+export type MainColumItem = {
   Item: ComponentType<BrowserMainColumnItemBase>
   name: string
   filters: AddonItem[]
   // numElements: number // the amount of elements in the Item list
+  key: string
 }
 
 export type BrowserProps = BrowserPropsData & BrowserPropsUI
@@ -31,62 +32,61 @@ export type BrowserPropsUI = {
 export const Browser: FC<BrowserProps> = ({ mainColumnItems, title, showFilters }) => {
   const mainColumnRef = useRef<HTMLDivElement>(null)
   const [currentMainFilter, setCurrentMainFilter] = useState<string | number | undefined>(undefined)
-  const [currentFilters, setCurrentFilters] = useState<AddonItem[] | undefined>([])
+
+  // const filteredMainColumItems = mainColumnItems?.filter(e => e.numElements !== 0)
 
   const filterByItemType = useMemo(() => {
     return mainColumnItems
-      ? sortAddonItems(
-          mainColumnItems
-            .sort((a, b) => (a.position ?? Infinity) - (b.position ?? Infinity))
-            .map(e => {
-              // if (e.numElements === 0) return null
-              const isCurrent = e.key === currentMainFilter
+      ? mainColumnItems
+          .map(e => {
+            // if (e.numElements === 0) return null
+            const isCurrent = e.key === currentMainFilter
 
-              const options = mainColumnItems.map(i => {
-                return { label: i.name, value: i.key.toString() }
-              })
-              options.push({ label: 'All', value: 'all' })
+            const list = mainColumnItems.map(i => {
+              return { name: i.name, key: i.key }
+            })
+            list.push({ name: 'All', key: 'all' })
 
-              return isCurrent || !currentMainFilter ? (
-                isCurrent ? (
-                  <SimpleDropdown
-                    className={`content-type-filter`}
-                    options={options}
-                    selected={[e.key.toString()]}
-                    label={e.name}
-                    onClick={(key: string | number) => {
-                      setCurrentMainFilter(key === 'all' ? undefined : key)
-                    }}
-                  />
-                ) : (
-                  <SecondaryButton
-                    key={e.key}
-                    className={`content-type-filter filter-element ${isCurrent ? 'selected' : ''}`}
-                    onClick={() => {
-                      setCurrentMainFilter(e.key)
-                    }}
-                    color="grey"
-                  >
-                    <span>{e.name}</span>
-                  </SecondaryButton>
-                )
-              ) : null
-            }),
-        )
+            return isCurrent || !currentMainFilter ? (
+              isCurrent ? (
+                <SimpleDropdown
+                  list={list}
+                  selected={[e.key]}
+                  label={e.name}
+                  onClick={(key: string | number) => {
+                    setCurrentMainFilter(key === 'all' ? undefined : key)
+                  }}
+                />
+              ) : (
+                <SecondaryButton
+                  key={e.key}
+                  className={`filter-element ${isCurrent ? 'selected' : ''}`}
+                  onClick={() => {
+                    setCurrentMainFilter(e.key)
+                  }}
+                  color="grey"
+                >
+                  <span>{e.name}</span>
+                </SecondaryButton>
+              )
+            ) : null
+          })
+          .filter(item => !!item)
       : []
   }, [mainColumnItems, currentMainFilter])
 
+  const [currentFilters, setCurrentFilters] = useState<AddonItem[] | undefined>([])
   useEffect(() => {
-    mainColumnItems.map(e => e.key === currentMainFilter && setCurrentFilters(e.filters))
+    mainColumnItems?.map(e => e.key === currentMainFilter && setCurrentFilters(e.filters))
   }, [currentMainFilter, mainColumnItems])
 
   const filters =
     currentFilters && currentFilters.length > 0 ? (
-      <>
+      <div className="filters">
         {currentFilters.map(i => (
           <i.Item key={i.key} />
         ))}
-      </>
+      </div>
     ) : null
 
   const updatedMainColumnItems = [...(mainColumnItems ?? [])].filter(
@@ -104,53 +104,24 @@ export const Browser: FC<BrowserProps> = ({ mainColumnItems, title, showFilters 
         {/* <div className="separator" /> */}
         {filters}
         {/* <div className="separator"></div>
-      <SecondaryButton className={`filter-element`} color="grey">
-        All filters
-      </SecondaryButton> */}
+        <SecondaryButton className={`filter-element`} color="grey">
+          All filters
+        </SecondaryButton> */}
         {/* <TertiaryButton onClick={() => setCurrentMainFilter(undefined)}>Reset</TertiaryButton> */}
       </>
     ) : null
 
-  const filterBarRef = useRef<HTMLDivElement>(null)
-  const [filterBarHeigh, setFilterBarHeigh] = useState(0)
-
-  useEffect(() => {
-    // Function to update padding based on the div's height
-    const updateHeight = () => {
-      if (filterBarRef.current) {
-        setFilterBarHeigh(filterBarRef.current.clientHeight)
-      }
-    }
-    // Create an observer instance
-    const observer = new MutationObserver(updateHeight)
-
-    // Configuration of the observer
-    const config = { attributes: true, childList: true, subtree: true }
-
-    // Start observing the target node
-    if (filterBarRef.current) {
-      observer.observe(filterBarRef.current, config)
-      updateHeight() // Initial update
-    }
-
-    // Disconnect the observer on cleanup
-    return () => observer.disconnect()
-  }, [])
-
   return (
     <div className={`browser ${showFilters ? 'show-filters' : ''}`}>
       {showFilters && (
-        <div className="filter-bar" ref={filterBarRef}>
+        <div className="filter-bar">
           <div className="filter-bar-content">
-            <>
-              {filterByItemType.filter(e => !!e)}
-              {extraFilters && <div className="separator" />}
-              {extraFilters}
-            </>
+            <div className="content-type-filters">{filterByItemType.filter(e => !!e)}</div>
+            {extraFilters}
           </div>
         </div>
       )}
-      <div className="content" style={{ paddingTop: filterBarHeigh }}>
+      <div className="content">
         <div className={`main-column ${currentMainFilter ? 'full-width' : ''}`} ref={mainColumnRef}>
           {title && <div className="title">{title}</div>}
           {useMemo(

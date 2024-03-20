@@ -1,36 +1,21 @@
-import type { TextOptionProps } from '@moodlenet/component-library'
 import type { EdMetaExposeType } from './expose-def.mjs'
 
-export type LearningOutcome = {
-  code: string
-  verb: string
-  sentence: string
-}
-
-export type LearningOutcomeOption = {
-  name: string
-  code: string
-  verbs: string[]
-}
-
-export type EdMetaEntityNames =
-  | 'IscedField'
-  | 'IscedGrade'
-  | 'Language'
-  | 'License'
-  | 'EdAssetType'
-  | 'BloomCognitive'
+export type EdMetaEntityNames = 'IscedField' | 'IscedGrade' | 'Language' | 'License' | 'EdAssetType'
 export type MyWebDeps = {
   me: EdMetaExposeType
 }
 
+export type Subject = { label: string; value: string }
+export type Level = { label: string; value: string }
+export type Type = { label: string; value: string }
+export type Langauge = { label: string; value: string }
+export type License = { label: string; value: string }
 export type PublishedMeta = {
-  types: TextOptionProps[]
-  languages: TextOptionProps[]
-  licenses: TextOptionProps[]
-  subjects: TextOptionProps[]
-  levels: TextOptionProps[]
-  learningOutcomes: LearningOutcomeOption[]
+  types: Type[]
+  languages: Langauge[]
+  licenses: License[]
+  subjects: Subject[]
+  levels: Level[]
 }
 
 export type SubjectData = {

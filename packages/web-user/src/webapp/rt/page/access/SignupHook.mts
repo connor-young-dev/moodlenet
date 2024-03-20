@@ -1,35 +1,27 @@
-import type { AddOnMap } from '@moodlenet/core/lib'
-import { href } from '@moodlenet/react-app/common'
 import {
-  createPlugin,
+  createHookPlugin,
   useFooterProps,
   useMinimalisticHeaderProps,
 } from '@moodlenet/react-app/webapp'
 import { useMemo } from 'react'
-import {
-  LOGIN_PAGE_ROUTE_BASE_PATH,
-  USER_AGREEMENTS_PAGE_PATH,
-} from '../../../../common/webapp-routes.mjs'
 import type { SignupItem, SignupProps } from '../../../ui/exports/ui.mjs'
 export type SignupMethodItem = Omit<SignupItem, 'key'>
-export const SignupPlugins = createPlugin<{
-  signupMethod: AddOnMap<SignupMethodItem>
-}>()
+export const SignupPlugins = createHookPlugin<{
+  signupMethod: SignupMethodItem
+}>({ signupMethod: null })
 
 export const useSignUpProps = (): SignupProps => {
   const headerProps = useMinimalisticHeaderProps()
   const footerProps = useFooterProps()
-  const plugins = SignupPlugins.usePluginHooks()
+  const [addons] = SignupPlugins.useHookPlugin()
 
   const signupProps = useMemo<SignupProps>(() => {
     const signupProps: SignupProps = {
       headerProps,
       footerProps,
-      signupItems: plugins.getKeyedAddons('signupMethod'),
-      loginHref: href(LOGIN_PAGE_ROUTE_BASE_PATH),
-      userAgreementHref: href(USER_AGREEMENTS_PAGE_PATH),
+      signupItems: addons.signupMethod,
     }
     return signupProps
-  }, [headerProps, footerProps, plugins])
+  }, [headerProps, footerProps, addons.signupMethod])
   return signupProps
 }

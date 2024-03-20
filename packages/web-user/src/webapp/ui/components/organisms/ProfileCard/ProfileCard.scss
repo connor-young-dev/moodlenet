@@ -1,52 +1,21 @@
 .profile-card {
   width: 100%;
   max-width: 245px;
-  height: 100%;
-  // height: fit-content;
+  height: fit-content;
+  // height: 254px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
   padding-bottom: 13px;
 
-  // &:not(.approved) {
-  //   box-shadow: 0 0 6px #e1dedb73;
-  //   > .profile-card-content > .images {
-  //     > .background,
-  //     > .avatar > img {
-  //       opacity: 0.5;
-  //     }
-
-  //     > .avatar {
-  //       position: relative;
-
-  //       &:before {
-  //         content: '';
-  //         position: absolute;
-  //         width: 100%;
-  //         height: 100%;
-  //         background-color: white;
-  //         border-radius: 50px;
-  //         left: 0;
-  //         top: 0;
-  //       }
-  //     }
-  //   }
-  // }
-
   > .profile-card-content {
     width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-
     > .images {
       display: flex;
       flex-direction: column;
       align-items: center;
       width: 100%;
-
       > .background {
         cursor: pointer;
         width: 100%;
@@ -55,29 +24,14 @@
         border-radius: 16px 16px 0 0;
       }
 
-      > .avatar {
+      > .avatar > img {
+        z-index: 3;
+        border: 2px solid white;
+        border-radius: 50px;
+        width: 100px;
+        height: 100px;
+        object-fit: cover;
         margin-top: -55px;
-        position: relative;
-        > img {
-          z-index: 3;
-          border: 2px solid white;
-          border-radius: 50px;
-          width: 100px;
-          height: 100px;
-          object-fit: cover;
-        }
-        > .level-avatar {
-          position: absolute;
-          bottom: 5px;
-          right: 0;
-          width: 28px;
-          height: 28px;
-          > img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-          }
-        }
       }
     }
 

@@ -88,16 +88,21 @@
       }
 
       > .dropdown,
-      > .date-field > .fields > .dropdown {
+      > .date > .fields > .dropdown {
         gap: 4px;
 
         > label {
           margin-bottom: 0;
         }
+        > .input-container {
+          background-color: transparent;
+          border: none;
+        }
 
         &.disabled {
           > .input-container {
             background-color: transparent;
+            border: none;
             > .dropdown-button {
               color: #c6c6c6;
             }
@@ -128,7 +133,7 @@
           overflow: hidden;
           text-overflow: ellipsis;
 
-          &.date-field-read-mode {
+          &.date {
             display: flex;
             gap: 8px;
           }
@@ -158,13 +163,14 @@
       }
 
       > *,
-      .date-field > .fields > * {
+      .date > .fields > * {
         > label {
           margin-bottom: 2px;
         }
         > .input-container {
           min-height: 24px;
           height: 24px;
+          box-shadow: none;
           > .dropdown-button {
             padding: 0;
             > .dropdown-pill {
@@ -179,7 +185,7 @@
         }
       }
 
-      > .date-field {
+      > .date {
         width: 100%;
         display: flex;
         flex-direction: column;

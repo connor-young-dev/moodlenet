@@ -1,4 +1,4 @@
-import type { Meta as ComponentMeta, StoryFn as ComponentStory } from '@storybook/react'
+import type { ComponentMeta, ComponentStory } from '@storybook/react'
 import type { FC } from 'react'
 
 function html() {
@@ -486,16 +486,15 @@ export const Email: FC = () => {
   return <div style={{ width: '100%', height: '100%' }} dangerouslySetInnerHTML={html()} />
 }
 
-const meta: ComponentMeta<typeof Email> = {
+export default {
   title: 'Pages/Emails/Access/RecoverPassword',
   component: Email,
   argTypes: {},
   parameters: { layout: 'fullscreen' },
   excludeStories: ['Email'],
-}
-export default meta
+} as ComponentMeta<typeof Email>
 
 const Template: ComponentStory<typeof Email> = () => <Email />
 
-export const Default: typeof Template = Template.bind({})
+export const Default = Template.bind({})
 Default.args = {}

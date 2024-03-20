@@ -1,5 +1,5 @@
-import { LibraryAdd as LibraryAddIcon, NoteAdd as NoteAddIcon } from '@mui/icons-material'
-import type { Meta as ComponentMeta, StoryFn as ComponentStory } from '@storybook/react'
+import { LibraryAdd as LibraryAddIcon, NoteAdd as NoteAddIcon } from '@material-ui/icons'
+import type { ComponentMeta, ComponentStory } from '@storybook/react'
 import addIcon from '../../../assets/icons/add-round.svg'
 import type { FloatingMenuProps } from './FloatingMenu.js'
 import { FloatingMenu } from './FloatingMenu.js'
@@ -18,9 +18,6 @@ const meta: ComponentMeta<typeof FloatingMenu> = {
       </div>
     ),
   ],
-  parameters: {
-    layout: 'centered',
-  },
 }
 
 export const FloatingMenuStoryProps: FloatingMenuProps = {
@@ -50,7 +47,7 @@ const FloatingMenuStory: ComponentStory<typeof FloatingMenu> = args => (
   </FloatingMenu>
 )
 
-export const Default: typeof FloatingMenuStory = FloatingMenuStory.bind({})
+export const Default = FloatingMenuStory.bind({})
 Default.args = FloatingMenuStoryProps
 
 export default meta

@@ -1,7 +1,7 @@
 import {
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
-} from '@mui/icons-material'
+} from '@material-ui/icons'
 import type { FC } from 'react'
 import type { DropdownProps } from '../Dropdown/Dropdown.js'
 import { Dropdown, IconPill, IconTextOption } from '../Dropdown/Dropdown.js'

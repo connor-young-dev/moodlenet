@@ -5,7 +5,7 @@ import { Route } from 'react-router-dom'
 import { MyContext } from './Context.js'
 import HelloWorldPage from './HelloWorldPage.jsx'
 
-const myRoutes = { routes: <Route index component={HelloWorldPage} /> }
+const myRoutes = { routes: <Route index element={<HelloWorldPage />} /> }
 
 const MyPageLink = () => {
   return <Link href={{ url: '/my-moodlenet-mjs-pkg-template' }}>my page</Link>
@@ -25,12 +25,10 @@ const MainComponent = ({ children }) => {
 
   const [apiResponse, setApiResponse] = useState()
   useEffect(() => {
-    pkgCtx.use.me
-      .rpc('hello/world')({
-        stringParam: 'my string param',
-        numberParam: 100,
-      })
-      .then(setApiResponse)
+    pkgCtx.use.me.rpc['hello/world']({
+      stringParam: 'my string param',
+      numberParam: 100,
+    }).then(setApiResponse)
   }, [pkgCtx.use.me])
 
   const ctx = useMemo(() => ({ apiResponse }), [apiResponse])

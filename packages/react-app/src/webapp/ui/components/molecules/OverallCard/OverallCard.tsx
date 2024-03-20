@@ -11,7 +11,6 @@ export type OverallCardItem = {
   Icon: ComponentType
   name: string
   value: string | number
-  className?: string
   href?: Href
 }
 
@@ -28,9 +27,6 @@ export const OverallCard: FC<OverallCardProps> = ({
   showIcons,
   noCard,
 }) => {
-  const getValueString = (value: string | number) =>
-    typeof value === 'number' ? value.toLocaleString() : value
-
   return !items || items.length === 0 ? null : (
     <Card
       className="overall-card"
@@ -40,27 +36,27 @@ export const OverallCard: FC<OverallCardProps> = ({
     >
       <div className="overall-container">
         {items && items.length > 0 && showIcons
-          ? items?.map(({ name, Icon, value, className }) => {
+          ? items?.map(item => {
               return (
-                <abbr className="data" title={name} key={name}>
-                  <div className={`title-icon ${className}`}>
-                    <Icon />
-                  </div>
-                  {getValueString(value)}
-                </abbr>
+                <div className="data" key="item.name">
+                  <abbr title={`${item.name}`}>
+                    <item.Icon />
+                  </abbr>
+                  {item.value}
+                </div>
               )
             })
-          : items?.map(({ name, href, value }) => {
-              return href ? (
-                <Link href={href} className="data" title={name} key={name}>
-                  {getValueString(value)}
-                  <span>{name}</span>
+          : items?.map(item => {
+              return item.href ? (
+                <Link href={item.href} className="data" key={item.name}>
+                  {item.value}
+                  <span>{item.name}</span>
                 </Link>
               ) : (
-                <abbr className="data" title={name} key={name}>
-                  {getValueString(value)}
-                  <span>{name}</span>
-                </abbr>
+                <div className="data" key={item.name}>
+                  {item.value}
+                  <span>{item.name}</span>
+                </div>
               )
             })}
       </div>

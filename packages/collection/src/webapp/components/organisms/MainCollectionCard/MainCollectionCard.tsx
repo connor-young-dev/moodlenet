@@ -1,8 +1,10 @@
+import { Share } from '@material-ui/icons'
 import type { AddonItem, FloatingMenuContentItem } from '@moodlenet/component-library'
 import {
   Card,
   FloatingMenu,
   InputTextField,
+  Loading,
   Modal,
   PrimaryButton,
   SecondaryButton,
@@ -11,9 +13,9 @@ import {
 } from '@moodlenet/component-library'
 import type { AssetInfoForm } from '@moodlenet/component-library/common'
 import type { FormikHandle } from '@moodlenet/react-app/ui'
-import { Check, Delete, Edit, MoreVert, Public, PublicOff, Save, Share } from '@mui/icons-material'
+import { Delete, Edit, MoreVert, Public, PublicOff, Save } from '@mui/icons-material'
 import type { FC } from 'react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type {
   CollectionAccessProps,
   CollectionActions,
@@ -33,16 +35,11 @@ export type MainCollectionCardSlots = {
   footerRowItems: (AddonItem | null)[]
 }
 
-export type ValidForms = {
-  isDraftFormValid: boolean
-  isPublishedFormValid: boolean
-  isImageValid: boolean
-}
-
 export type MainCollectionCardProps = {
   slots: MainCollectionCardSlots
 
   data: CollectionDataProps
+  // collectionForm: CollectionFormProps
   form: FormikHandle<CollectionFormProps>
   imageForm: FormikHandle<{ image: AssetInfoForm | undefined | null }>
 
@@ -51,17 +48,10 @@ export type MainCollectionCardProps = {
   access: CollectionAccessProps
 
   publish: () => void
-  publishCheck: () => void
+  isSaving: boolean
 
   isEditing: boolean
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>
-  setIsPublishValidating: React.Dispatch<React.SetStateAction<boolean>>
-
-  emptyOnStart: boolean
-  setEmptyOnStart: React.Dispatch<React.SetStateAction<boolean>>
-
-  isFormValid: ValidForms
-  setFieldsAsTouched: () => void
 
   shouldShowErrors: boolean
   setShouldShowErrors: React.Dispatch<React.SetStateAction<boolean>>
@@ -71,6 +61,7 @@ export const MainCollectionCard: FC<MainCollectionCardProps> = ({
   slots,
 
   data,
+  // collectionForm,
   form,
   imageForm,
 
@@ -79,17 +70,10 @@ export const MainCollectionCard: FC<MainCollectionCardProps> = ({
   access,
 
   publish,
-  publishCheck,
+  isSaving,
 
   isEditing,
   setIsEditing,
-  setIsPublishValidating,
-
-  emptyOnStart,
-  setEmptyOnStart,
-
-  isFormValid,
-  setFieldsAsTouched,
 
   shouldShowErrors,
   setShouldShowErrors,
@@ -103,89 +87,58 @@ export const MainCollectionCard: FC<MainCollectionCardProps> = ({
     footerRowItems,
   } = slots
 
-  const { mnUrl, image } = data
+  const {
+    // id,
+    mnUrl,
+    // image,
+  } = data
 
   const { isPublished } = state
 
-  const { unpublish, deleteCollection } = actions
-
+  const { unpublish, deleteCollection, editData, setImage } = actions
   const { canPublish, canDelete, canEdit } = access
-
-  const { isDraftFormValid, isPublishedFormValid, isImageValid } = isFormValid
 
   const [showUrlCopiedAlert, setShowUrlCopiedAlert] = useState<boolean>(false)
   const [isToDelete, setIsToDelete] = useState<boolean>(false)
+  // const backupImage: string | undefined = useMemo(
+  //   () => (imageForm.values.image ? undefined : getBackupImage(id)),
+  //   [id, imageForm.values.image],
+  // )
+  const [isCurrentlySaving, setIsCurrentlySaving] = useState(false)
+  const [isWaitingForSaving, setisWaitingForSaving] = useState(false)
 
   const handleOnEditClick = () => {
     setIsEditing(true)
     setShouldShowErrors(false)
+    setIsCurrentlySaving(false)
+    setisWaitingForSaving(false)
   }
-
-  const form_submitForm = form.submitForm
-  const imageForm_submitForm = imageForm.submitForm
-  const imageForm_setFieldValue = imageForm.setFieldValue
-  // const imageForm_validateForm = imageForm.validateForm
-
-  const [isHandlingSaving, setIsHandlingSaving] = useState<boolean>(false)
 
   const handleOnSaveClick = () => {
-    if (!form.dirty && !imageForm.dirty) {
-      setIsEditing(false)
-      return
-    }
-    setIsPublishValidating(isPublished)
-    setIsHandlingSaving(true)
+    setisWaitingForSaving(true)
+    setShouldShowErrors(false)
+    editData(form.values)
+    typeof imageForm.values.image?.location !== 'string' &&
+      setImage(imageForm.values.image?.location)
   }
 
-  const applySave = useCallback(() => {
-    const isFormValid = isPublished ? isPublishedFormValid : isDraftFormValid
-
-    setFieldsAsTouched()
-    !isImageValid && imageForm_setFieldValue('image', null)
-
-    if (!isFormValid) {
-      setShouldShowErrors(true)
-      return
-    }
-
-    setShouldShowErrors(false)
-
-    if (form.dirty) {
-      form_submitForm()
-    }
-
-    if (imageForm.dirty) {
-      imageForm.values.image !== image &&
-        typeof imageForm.values.image?.location !== 'string' &&
-        imageForm_submitForm()
-    }
-
-    setEmptyOnStart(false)
-    setIsEditing(false)
-  }, [
-    form.dirty,
-    form_submitForm,
-    image,
-    imageForm.dirty,
-    imageForm.values.image,
-    imageForm_setFieldValue,
-    imageForm_submitForm,
-    isDraftFormValid,
-    isImageValid,
-    isPublished,
-    isPublishedFormValid,
-    setEmptyOnStart,
-    setFieldsAsTouched,
-    setIsEditing,
-    setShouldShowErrors,
-  ])
-
   useEffect(() => {
-    if (isHandlingSaving) {
-      applySave()
-      setIsHandlingSaving(false)
+    if (isWaitingForSaving && isSaving) {
+      setisWaitingForSaving(false)
+      setIsCurrentlySaving(true)
     }
-  }, [isHandlingSaving, applySave])
+    if (!isSaving && isCurrentlySaving) {
+      setIsCurrentlySaving(false)
+      setIsEditing(false)
+    }
+  }, [
+    form.isSubmitting,
+    imageForm.isSubmitting,
+    isCurrentlySaving,
+    isSaving,
+    isWaitingForSaving,
+    setIsEditing,
+  ])
 
   const copyUrl = () => {
     navigator.clipboard.writeText(mnUrl)
@@ -198,16 +151,19 @@ export const MainCollectionCard: FC<MainCollectionCardProps> = ({
   const title = canEdit ? (
     <InputTextField
       name="title"
-      key="title"
-      className="title"
       isTextarea
+      textAreaAutoSize
+      className="title underline"
       value={form.values.title}
       placeholder="Title"
+      key="title"
       edit={isEditing}
-      onChange={form.handleChange}
-      error={shouldShowErrors && isEditing && form.errors.title}
-      textAreaAutoSize
       noBorder
+      onChange={form.handleChange}
+      style={{
+        pointerEvents: `${form.isSubmitting ? 'none' : 'inherit'}`,
+      }}
+      error={shouldShowErrors && form.errors.title}
     />
   ) : (
     <div className="title" key="title">
@@ -221,9 +177,11 @@ export const MainCollectionCard: FC<MainCollectionCardProps> = ({
     </div>
   )
 
-  const updatedTopLeftHeaderItems = [collectionLabel, ...(topLeftHeaderItems ?? [])].filter(
-    (item): item is AddonItem => !!item,
-  )
+  const updatedTopLeftHeaderItems = [
+    collectionLabel,
+    // savingFeedback,
+    ...(topLeftHeaderItems ?? []),
+  ].filter((item): item is AddonItem => !!item)
 
   const empty = !form.values.title && !form.values.description && !imageForm.values.image
 
@@ -238,31 +196,23 @@ export const MainCollectionCard: FC<MainCollectionCardProps> = ({
       }
     : null
 
-  const deleteButton: FloatingMenuContentItem | null = canDelete
-    ? {
-        Element: (
-          <div
-            className={`delete-button ${emptyOnStart ? 'disabled' : ''}`}
-            key="delete-button"
-            onClick={() => !emptyOnStart && setIsToDelete(true)}
-          >
-            <Delete /> Delete
-          </div>
-        ),
-      }
-    : null
+  const deleteButton: FloatingMenuContentItem | null =
+    !empty && canDelete
+      ? {
+          Element: (
+            <div key="delete-button" onClick={() => setIsToDelete(true)}>
+              <Delete />
+              Delete
+            </div>
+          ),
+        }
+      : null
 
   const unpublishButton: FloatingMenuContentItem | null =
     canPublish && isPublished
       ? {
           Element: (
-            <div
-              key="unpublish-button"
-              onClick={() => {
-                unpublish()
-                setIsPublishValidating(false)
-              }}
-            >
+            <div key="unpublish-button" onClick={unpublish}>
               <PublicOff />
               Unpublish
             </div>
@@ -271,24 +221,12 @@ export const MainCollectionCard: FC<MainCollectionCardProps> = ({
       : null
 
   const publishButton: FloatingMenuContentItem | null =
-    !isEditing && canPublish && !isPublished
+    canPublish && !isPublished
       ? {
           Element: (
             <div key="publish-button" onClick={publish}>
               <Public style={{ fill: '#00bd7e' }} />
               Publish
-            </div>
-          ),
-        }
-      : null
-
-  const publishCheckButton: FloatingMenuContentItem | null =
-    isEditing && canPublish && !isPublished
-      ? {
-          Element: (
-            <div key="publish-button" onClick={publishCheck}>
-              <Check style={{ fill: '#00bd7e' }} />
-              Publish check
             </div>
           ),
         }
@@ -310,7 +248,6 @@ export const MainCollectionCard: FC<MainCollectionCardProps> = ({
 
   const updatedMoreButtonItems = [
     publishButton,
-    publishCheckButton,
     unpublishButton,
     shareButton,
     deleteButton,
@@ -336,24 +273,37 @@ export const MainCollectionCard: FC<MainCollectionCardProps> = ({
     ? {
         Item: () => (
           <div className="edit-save">
-            {isEditing && (
+            {isEditing && !isCurrentlySaving && (
               <PrimaryButton
+                className={`${isCurrentlySaving ? 'loading' : ''}`}
                 color="green"
-                onClick={handleOnSaveClick}
-                disabled={empty && emptyOnStart}
+                onClick={isCurrentlySaving ? handleOnEditClick : handleOnSaveClick}
               >
-                <div className="label">
+                <div
+                  className="loading"
+                  style={{
+                    visibility: isCurrentlySaving ? 'visible' : 'hidden',
+                  }}
+                >
+                  <Loading color="white" />
+                </div>
+                <div
+                  className="label"
+                  style={{
+                    visibility: isCurrentlySaving ? 'hidden' : 'visible',
+                  }}
+                >
                   <Save />
                 </div>
               </PrimaryButton>
             )}
-            {/* {isEditing && isCurrentlySaving && (
+            {isEditing && isCurrentlySaving && (
               <PrimaryButton className={`${'loading'}`} onClick={handleOnEditClick}>
                 <div className="loading">
                   <Loading color="white" />
                 </div>
               </PrimaryButton>
-            )} */}
+            )}
             {!isEditing && (
               <SecondaryButton onClick={handleOnEditClick} color="orange">
                 <Edit />
@@ -448,13 +398,14 @@ export const MainCollectionCard: FC<MainCollectionCardProps> = ({
       className="description-container"
       key="description-container"
       style={{
+        pointerEvents: `${form.isSubmitting ? 'none' : 'inherit'}`,
         height: showFullDescription ? 'fit-content' : '66px',
         overflow: showFullDescription ? 'auto' : 'hidden',
       }}
     >
       {canEdit ? (
         <InputTextField
-          className="description"
+          className="description underline"
           name="description"
           isTextarea
           ref={descriptionEditRef}
@@ -465,10 +416,19 @@ export const MainCollectionCard: FC<MainCollectionCardProps> = ({
           placeholder="Description"
           value={form.values.description}
           onChange={form.handleChange}
-          error={shouldShowErrors && isEditing && form.errors.description}
+          error={shouldShowErrors && form.errors.description}
         />
       ) : (
-        <div key="description" className="description-text" ref={descriptionRef}>
+        <div
+          key="description"
+          className="description-text"
+          ref={descriptionRef}
+          // style={{
+          //   height: showFullDescription ? 'fit-content' : '66px',
+          //   overflow: showFullDescription ? 'auto' : 'hidden',
+          //   // paddingBottom: showFullDescription && !isSmallDescription ? '20px' : 0,
+          // }}
+        >
           {form.values.description}
         </div>
       )}
@@ -503,7 +463,7 @@ export const MainCollectionCard: FC<MainCollectionCardProps> = ({
   const snackbars = (
     <>
       {showUrlCopiedAlert && (
-        <Snackbar type="success" position="bottom" autoHideDuration={3000} showCloseButton={false}>
+        <Snackbar type="success" position="bottom" autoHideDuration={6000} showCloseButton={false}>
           Copied to clipoard
         </Snackbar>
       )}

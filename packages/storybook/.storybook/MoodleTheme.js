@@ -2,7 +2,7 @@ import { create } from '@storybook/theming'
 import logo from '../public/moodlenet-logo.svg'
 
 export default create({
-  base: 'dark',
+  base: 'light',
   brandTitle: 'MoodleNet',
   brandUrl: 'https://moodle.net',
   brandImage: logo,

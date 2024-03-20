@@ -4,20 +4,18 @@ import {
   ErrorOutline as ErrorOutlineIcon,
   InfoOutlined as InfoOutlinedIcon,
   ReportProblemOutlined as ReportProblemOutlinedIcon,
-} from '@mui/icons-material'
+} from '@material-ui/icons'
 import type React from 'react'
 import type { CSSProperties, ReactNode } from 'react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Card from '../Card/Card.js'
 import './Snackbar.scss'
-
-import { createPortal } from 'react-dom'
 
 export type SnackbarProps = {
   actions?: ReactNode
   icon?: ReactNode
   showIcon?: boolean
-  closeButtonText?: string
+  buttonText?: string
   style?: CSSProperties
   type?: 'error' | 'warning' | 'info' | 'success'
   className?: string
@@ -32,53 +30,43 @@ export type SnackbarProps = {
 const stopPropagation = (event: React.MouseEvent) => event.stopPropagation()
 
 export const Snackbar: React.FC<SnackbarProps> = ({
+  onClose,
   showCloseButton,
   actions,
   icon,
   showIcon,
   style,
-  closeButtonText,
+  buttonText,
   className,
   type,
   autoHideDuration,
   waitDuration,
   position,
   children,
-  onClose,
 }) => {
-  const [state, setState] = useState<'opening' | 'opened' | 'closing' | 'closed' | 'hidden'>(
-    'opening',
+  const [movementState, setMovementState] = useState<'opening' | 'closing' | 'closed'>('opening')
+  const handleonClose = useCallback(
+    (event?: React.MouseEvent) => {
+      event?.stopPropagation()
+      setMovementState('closing')
+      setTimeout(() => {
+        setMovementState('closed')
+        onClose && onClose()
+      }, 100)
+    },
+    [onClose],
   )
-  const snackbarRef = useRef<HTMLDivElement>(null)
-
-  const handleonClose = useCallback(() => {
-    setState('closing')
-    setTimeout(() => {
-      onClose && onClose()
-      setState('closed')
-    }, 300)
-  }, [onClose])
 
   useEffect(() => {
     if (waitDuration) {
-      setState('closed')
+      setMovementState('closed')
       const timer = setTimeout(() => {
-        setState('opening')
+        setMovementState('opening')
       }, waitDuration)
       return () => clearTimeout(timer)
     }
     return
-  }, [waitDuration, setState])
-
-  useEffect(() => {
-    if (state === 'opening') {
-      const timer = setTimeout(() => {
-        setState('opened')
-      }, 300)
-      return () => clearTimeout(timer)
-    }
-    return
-  }, [setState, state])
+  }, [waitDuration, setMovementState])
 
   useEffect(() => {
     if (autoHideDuration) {
@@ -93,10 +81,9 @@ export const Snackbar: React.FC<SnackbarProps> = ({
     return
   }, [autoHideDuration, waitDuration, handleonClose])
 
-  const snackbar = (
+  return (
     <Card
-      ref={snackbarRef}
-      className={`snackbar ${className} type-${type} state-${state} position-${position}`}
+      className={`snackbar ${className} type-${type} state-${movementState} position-${position}`}
       onClick={stopPropagation}
       style={style}
     >
@@ -122,32 +109,19 @@ export const Snackbar: React.FC<SnackbarProps> = ({
       )}
       <div className="content">{children}</div>
       {actions && <div className="actions">{actions}</div>}
-      {(showCloseButton || closeButtonText) && (
-        <abbr className="close-button" onClick={handleonClose} title={closeButtonText ?? 'Close'}>
-          {closeButtonText ? <span>{closeButtonText}</span> : <CloseRoundedIcon />}
-        </abbr>
+      {showCloseButton && buttonText && (
+        <div className="close-button" onClick={handleonClose}>
+          {buttonText ? <span>{buttonText}</span> : <CloseRoundedIcon />}
+        </div>
       )}
     </Card>
   )
-
-  const snackbarStack = document.querySelector('.snackbar-stack')
-
-  if (state === 'closed') return null
-
-  return snackbarStack
-    ? snackbar
-    : createPortal(
-        <div className="snackbar-portal">{snackbar}</div>,
-        document.querySelector('.layout-container#layout-container') ?? document.body,
-      )
 }
-
 Snackbar.defaultProps = {
   className: '',
   showIcon: true,
   position: 'bottom',
-  type: 'info',
-  showCloseButton: false,
+  showCloseButton: true,
   autoHideDuration: 6000,
 }
 

@@ -1,35 +1,79 @@
-import { CloseRounded as CloseRoundedIcon } from '@mui/icons-material'
+import { CloseRounded as CloseRoundedIcon } from '@material-ui/icons'
 import type React from 'react'
-import type { ReactNode } from 'react'
-import { useCallback, useEffect } from 'react'
-import { createPortal } from 'react-dom'
+import type { PropsWithChildren, ReactNode } from 'react'
+import { useCallback, useEffect, useLayoutEffect } from 'react'
+import ReactDOM from 'react-dom'
 import Card from '../Card/Card.js'
 import './Modal.scss'
 
+const portalElement = document.createElement('div')
+portalElement.setAttribute('class', 'modal-portal')
+portalElement.style.display = 'none'
+export function setPortalParentElement(parentElem?: HTMLElement) {
+  portalElement.remove()
+  parentElem?.prepend(portalElement)
+}
+setPortalParentElement(document.body)
+
+function Portal({ children }: PropsWithChildren<unknown>) {
+  useLayoutEffect(() => {
+    portalElement.style.display = 'block'
+    return () => {
+      portalElement.style.display = 'none'
+    }
+  }, [])
+
+  return ReactDOM.createPortal(children, portalElement)
+}
+
+// export type PortalProps = {
+//   className?: string
+//   el?: string
+//   children?: ReactNode
+// }
+
+// export const Portal: FC<PortalProps> = ({ className = 'modal-portal', el = 'div', children }) => {
+//   const [container] = React.useState(() => {
+//     // This will be executed only on the initial render
+//     // https://reactjs.org/docs/hooks-reference.html#lazy-initial-state
+//     const _el = document.createElement(el)
+//     _el.setAttribute('class', className)
+//     // _el.style.display = 'none'
+//     document.body.prepend(_el)
+//     return _el
+//   })
+
+//   React.useEffect(() => {
+//     container.classList.add(className)
+//     document.body.appendChild(container)
+//     return () => {
+//       document.body.removeChild(container)
+//     }
+//   }, [])
+
+//   return ReactDOM.createPortal(children, container)
+// }
+
 export type ModalProps = {
   title?: string
-  actions?: ReactNode
+  actions?: React.ReactNode
   style?: React.CSSProperties
   className?: string
   closeButton?: boolean
   children?: ReactNode
-  contentRef?: React.RefObject<HTMLDivElement>
-  onPressEnter?: () => void
   onClose?: () => void
 }
 
 const stopPropagation = (event: React.MouseEvent) => event.stopPropagation()
 
 export const Modal: React.FC<ModalProps> = ({
+  onClose,
   title,
   actions,
   style,
   className,
   closeButton,
   children,
-  contentRef,
-  onClose,
-  onPressEnter,
 }) => {
   const handleonClose = useCallback(
     (event: React.MouseEvent) => {
@@ -44,15 +88,12 @@ export const Modal: React.FC<ModalProps> = ({
       if (key === 'Escape') {
         onClose && onClose()
       }
-      if (key === 'Enter') {
-        onPressEnter && onPressEnter()
-      }
     }
     document.addEventListener('keyup', handleEvent)
     return () => document.removeEventListener('keyup', handleEvent)
-  }, [onClose, onPressEnter])
-  return createPortal(
-    <div className="modal-portal">
+  }, [onClose])
+  return (
+    <Portal>
       <div className={`modal-container ${className}`} onMouseDown={handleonClose}>
         <Card
           className={`modal`}
@@ -61,7 +102,7 @@ export const Modal: React.FC<ModalProps> = ({
         >
           {(title || closeButton) && (
             <div className="modal-header">
-              {<div className="title">{title ?? ''}</div>}
+              {title && <div className="title">{title}</div>}
               {closeButton && (
                 <div className="close-button" onClick={handleonClose}>
                   <CloseRoundedIcon />
@@ -69,16 +110,11 @@ export const Modal: React.FC<ModalProps> = ({
               )}
             </div>
           )}
-          {children && (
-            <div className="content" ref={contentRef}>
-              {children}
-            </div>
-          )}
+          {children && <div className="content">{children}</div>}
           {actions && <div className="actions">{actions}</div>}
         </Card>
       </div>
-    </div>,
-    document.querySelector('.layout-container#layout-container') ?? document.body,
+    </Portal>
   )
 }
 Modal.defaultProps = {

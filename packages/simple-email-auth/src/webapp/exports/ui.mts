@@ -2,6 +2,7 @@
 export * from '../ui/AdminSettings.js'
 export * from '../ui/Login/Login.js'
 export * from '../ui/NewPassword/NewPassword.js'
+export * from '../ui/NewPassword/Signup.js'
 export * from '../ui/RecoverPassword/RecoverPassword.js'
 export * from '../ui/Signup/Signup.js'
 export * from '../ui/UserSettings.js'

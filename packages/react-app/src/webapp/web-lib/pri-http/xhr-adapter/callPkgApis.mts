@@ -15,92 +15,81 @@ export function wrapFetch(wrapper: FetchWrapper) {
   FETCH_WRAPPERS.push({ wrapper })
 }
 
-// const FETCH_STATUS_SYM = Symbol('FETCH_STATUS_SYM')
-type PendingRpcHandle = { controller: AbortController }
-
-type PendingRpcItem = [Promise<any>, PendingRpcHandle]
-const pendingRpcs = new Map<string, PendingRpcItem>()
-const APP_ABORT_SYMBOL = Symbol()
-export function abortRpc(id: string) {
-  const [, handle] = pendingRpcs.get(id) ?? []
-  if (!handle) return false
-  handle.controller.abort(APP_ABORT_SYMBOL)
-  return true
+export function GET_UNIMPLEMENTED_OR_REVIEW_RPC<TargetPkgRpcDefs extends PkgRpcDefs>(
+  targetPkgId: PkgIdentifier,
+) {
+  return UNIMPLEMENTED_OR_REVIEW_RPC
+  function UNIMPLEMENTED_OR_REVIEW_RPC<
+    R = void,
+    B = void,
+    P = void,
+    Q = void,
+    UNIMPL_TYPE extends 'REVIEW' | 'TO IMPLEMENT' = 'TO IMPLEMENT',
+  >(
+    UNIMPL_TYPE: UNIMPL_TYPE,
+    RPC_ENDPOINT: UNIMPL_TYPE extends 'REVIEW' ? keyof TargetPkgRpcDefs : string,
+    mockRpcFn: (body: B, params: P, query: Q) => R | Promise<R>,
+  ) {
+    return async (body: B, params: P, query: Q) => {
+      const line = '*'.repeat(50)
+      console.error(`
+${line}
+****  DEV BEWARE ${UNIMPL_TYPE} RPC[${targetPkgId.name}::${String(RPC_ENDPOINT)}]
+${line}
+`)
+      return mockRpcFn(body, params, query)
+    }
+  }
 }
+
 export function pkgRpcs<TargetPkgRpcDefs extends PkgRpcDefs>(
   targetPkgId: PkgIdentifier,
   userPkgId: PkgIdentifier,
-  //rpcPaths: string[],
+  rpcPaths: string[],
 ): PkgRpcHandle<TargetPkgRpcDefs> {
-  const locateRpc: PkgRpcHandle<any> = (path, opts) => (body: any, params: any, query: any) => {
-    const rpcId = `${userPkgId.name}::${opts?.rpcId ?? Math.random().toString(36).slice(2)}`
-    abortRpc(rpcId)
-    const controller = new AbortController()
-    const pendingPromise = (async () => {
-      const { requestInit, url } = getPkgRpcFetchOpts(
-        userPkgId,
-        targetPkgId,
-        path as string,
-        [body, params, query],
-        { customHeaders: { 'x-moodlenet-react-app-rpcid': rpcId } },
-      )
-      const fetchExecutor: FetchWrapper2 = (url, requestInit) =>
-        fetch(url, { ...requestInit, signal: controller.signal })
+  return rpcPaths.reduce(
+    (_rpc, path) => ({
+      ..._rpc,
+      [path]: locateRpc(path),
+    }),
+    {
+      '@UNIMPLEMENTED_OR_REVIEW_RPC':
+        GET_UNIMPLEMENTED_OR_REVIEW_RPC<TargetPkgRpcDefs>(targetPkgId),
+    } as PkgRpcHandle<TargetPkgRpcDefs>,
+  )
+
+  function locateRpc(path: string) {
+    return async function (body: unknown, params: unknown, query: unknown) {
+      const { requestInit, url } = getPkgRpcFetchOpts(userPkgId, targetPkgId, path, [
+        body,
+        params,
+        query,
+      ])
+      const fetchExecutor: FetchWrapper2 = (url, requestInit) => fetch(url, requestInit)
       const response = await FETCH_WRAPPERS.reduce<FetchWrapper2>((nextWrapper, { wrapper }) => {
         const currentWrapper: FetchWrapper2 = (url, requestInit) =>
           wrapper(url, requestInit, nextWrapper)
         return currentWrapper
       }, fetchExecutor)(url, requestInit)
-
       const responseText = await response.text()
-      if (response.status >= 400 || response.status < 200) {
-        throw new Error(responseText, { cause: { rpcStatus: response.status } })
+      if (response.status !== 200) {
+        throw new Error(responseText)
       }
-      const rpcResponse = !responseText ? undefined : JSON.parse(responseText)
-
-      return rpcResponse
-    })()
-
-    const pendingRpcItem: PendingRpcItem = [pendingPromise, { controller }]
-    pendingRpcs.set(rpcId, pendingRpcItem)
-
-    pendingPromise
-      .catch(() => null)
-      .finally(() => {
-        if (pendingRpcs.get(rpcId) === pendingRpcItem) {
-          pendingRpcs.delete(rpcId)
-        }
-      })
-
-    return pendingPromise.catch(err => {
-      if (controller.signal.aborted && controller.signal.reason === APP_ABORT_SYMBOL) {
-        throw controller
+      if (!responseText) {
+        return undefined
       }
-      throw err
-    })
+      const responseJson = JSON.parse(responseText)
+      return responseJson
+    }
   }
-  return locateRpc
 }
-// function setPendingRpcHandler(p: any, handler: PendingRpcHandler) {
-//   p[FETCH_STATUS_SYM] = handler
-// }
-// function getPendingRpcHandler(p: any): undefined | PendingRpcHandler {
-//   return p[FETCH_STATUS_SYM]
-// }
 
-export type PkgRpcHandle<TargetPkgRpcDefs extends PkgRpcDefs> = <
-  Path extends keyof TargetPkgRpcDefs,
->(
-  path: Path,
-  opts?: RpcOpts,
-) => TargetPkgRpcDefs[Path]
-type RpcOpts = {
-  rpcId?: string
+export type PkgRpcHandle<TargetPkgRpcDefs extends PkgRpcDefs> = LocateRpc<TargetPkgRpcDefs> & {
+  '@UNIMPLEMENTED_OR_REVIEW_RPC': ReturnType<
+    typeof GET_UNIMPLEMENTED_OR_REVIEW_RPC<TargetPkgRpcDefs>
+  >
 }
-export function silentCatchAbort(err: any) {
-  if (err instanceof AbortController && err.signal.aborted) {
-    console.info(`RPC aborted by user`)
-    return null
-  }
-  throw err
+
+export type LocateRpc<TargetPkgRpcDefs extends PkgRpcDefs> = {
+  [path in keyof TargetPkgRpcDefs]: TargetPkgRpcDefs[path]
 }

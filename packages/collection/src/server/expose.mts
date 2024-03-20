@@ -1,7 +1,7 @@
 import { shell } from './shell.mjs'
 
 import { RpcStatus } from '@moodlenet/core'
-import { defaultImageUploadMaxSize, getWebappUrl } from '@moodlenet/react-app/server'
+import { getWebappUrl } from '@moodlenet/react-app/server'
 import type {
   AccessEntitiesRecordType,
   AqlVal,
@@ -16,12 +16,13 @@ import type { CollectionExposeType } from '../common/expose-def.mjs'
 import type { CollectionContributorRpc, CollectionRpc } from '../common/types.mjs'
 import { getCollectionHomePageRoutePath } from '../common/webapp-routes.mjs'
 import { canPublish } from './aql.mjs'
+import { publicFiles } from './init/fs.mjs'
 import {
   createCollection,
   delCollection,
   getCollection,
+  getImageLogicalFilename,
   getMyCollections,
-  getValidations,
   patchCollection,
   searchCollections,
   setCollectionImage,
@@ -34,13 +35,6 @@ import type { CollectionDataType } from './types.mjs'
 
 export const expose = await shell.expose<CollectionExposeType>({
   rpc: {
-    'webapp/get-configs': {
-      guard: () => void 0,
-      async fn() {
-        const { config } = await getValidations()
-        return { validations: config }
-      },
-    },
     'webapp/my-collections': {
       guard: () => void 0,
       async fn() {
@@ -84,7 +78,7 @@ export const expose = await shell.expose<CollectionExposeType>({
           })
       },
     },
-    'webapp/in-collection/:collectionKey/:action(add|remove)/:resourceKey': {
+    'webapp/in-collection/:collectionKey/:action-resource/:resourceKey': {
       guard: () => void 0,
       async fn(_, { action, collectionKey, resourceKey }) {
         const updateResult = await updateCollectionContent(collectionKey, action, resourceKey)
@@ -95,17 +89,11 @@ export const expose = await shell.expose<CollectionExposeType>({
       },
     },
     'webapp/set-is-published/:_key': {
-      guard: body => typeof body.publish === 'boolean',
+      guard: () => void 0,
       async fn({ publish }, { _key }) {
         const patchResult = await setPublished(_key, publish)
         if (!patchResult) {
-          if (patchResult === null) {
-            throw RpcStatus('Not Found')
-          }
-          if (patchResult === undefined) {
-            throw RpcStatus('Unauthorized')
-          }
-          throw RpcStatus('Precondition Failed')
+          return //throw ?
         }
         return
       },
@@ -135,15 +123,13 @@ export const expose = await shell.expose<CollectionExposeType>({
       },
     },
     'webapp/edit/:_key': {
-      guard: async body => {
-        const { draftCollectionValidationSchema } = await getValidations()
-
-        body.values = await draftCollectionValidationSchema.validate(body?.values, {
-          stripUnknown: true,
-        })
-      },
+      guard: () => void 0,
       async fn({ values }, { _key }) {
-        await patchCollection(_key, values)
+        const patchResult = await patchCollection(_key, values)
+        if (!patchResult) {
+          return
+        }
+        return
       },
     },
     'webapp/create': {
@@ -165,18 +151,14 @@ export const expose = await shell.expose<CollectionExposeType>({
         if (!delResult) {
           return
         }
+        const imageLogicalFilename = getImageLogicalFilename(_key)
+        await publicFiles.del(imageLogicalFilename)
+
         return
       },
     },
     'webapp/upload-image/:_key': {
-      guard: async body => {
-        const { imageValidationSchema } = await getValidations()
-        const validatedImageOrNullish = await imageValidationSchema.validate(
-          { image: body?.file?.[0] },
-          { stripUnknown: true },
-        )
-        body.file = [validatedImageOrNullish]
-      },
+      guard: () => void 0,
       async fn({ file: [uploadedRpcFile] }, { _key }) {
         const got = await getCollection(_key, { projectAccess: ['u'] })
 
@@ -184,16 +166,11 @@ export const expose = await shell.expose<CollectionExposeType>({
           throw RpcStatus('Unauthorized')
         }
 
-        const updateRes = await setCollectionImage(_key, uploadedRpcFile)
-        if (!updateRes) {
-          throw RpcStatus('Expectation Failed')
-        }
-        // console.log({ patched: updateRes?.patched.image, got: got.entity.image })
-        const imageUrl = updateRes?.patched.image ? getImageUrl(updateRes.patched.image) : null
+        const patched = await setCollectionImage(_key, uploadedRpcFile)
+        const imageUrl = patched?.entity.image ? getImageUrl(patched?.entity.image) : null
         return imageUrl
       },
       bodyWithFiles: {
-        maxSize: defaultImageUploadMaxSize,
         fields: {
           '.file': 1,
         },

@@ -11,27 +11,23 @@ import { SignupIcon } from './ui.mjs'
 
 registerAppRoutes({ routes })
 
-LoginPlugins.register(function useLoginMethod() {
-  const loginMethod = useMemo(
+LoginPlugins.register(function useLoginMethod({ useLoginMethod }) {
+  const addons = useMemo(
     () => ({
       default: { Icon: LoginIcon, Panel: LoginPanelContainer },
     }),
     [],
   )
-  return {
-    loginMethod,
-  }
+  useLoginMethod(addons)
 })
-SignupPlugins.register(function useSignupMethod() {
-  const signupMethod = useMemo(
+SignupPlugins.register(function useSignupMethod({ useSignupMethod }) {
+  const addons = useMemo(
     () => ({
       default: { Icon: SignupIcon, Panel: SignUpPanelContainer },
     }),
     [],
   )
-  return {
-    signupMethod,
-  }
+  useSignupMethod(addons)
 })
 
 // AdminSettingsPagePlugins.register(function useAdminSettingsPageHook({ useAdminSettingsSection }) {

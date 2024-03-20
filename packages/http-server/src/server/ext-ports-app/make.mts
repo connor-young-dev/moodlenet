@@ -15,6 +15,7 @@ import type { Field } from 'multer'
 import multer from 'multer'
 import { Readable } from 'stream'
 import { format } from 'util'
+import { env } from '../init/env.mjs'
 // import { HttpRpcResponse } from '../../common/pub-lib.mjs'
 import { getMiddlewares } from '../lib.mjs'
 import { shell } from '../shell.mjs'
@@ -43,18 +44,17 @@ export function makeExtPortsApp() {
       const multipartMW = multer({
         limits: {
           files: multerFields.reduce((acc, { maxCount }) => acc + (maxCount ?? 0), 0),
-          fileSize: rpcDefItem.bodyWithFiles?.maxSize ?? 0,
+          fileSize: rpcDefItem.bodyWithFiles?.maxFileSize ?? env.defaultRpcUploadMaxSize,
         },
       })
 
       const multerMw = multerFields.length ? multipartMW.fields(multerFields) : multipartMW.none()
 
       pkgApp.all(`/${rpcRoute}`, multerMw, ...getMiddlewares(), async (httpReq, httpResp, next) => {
-        if (!['get', 'post', 'head'].includes(httpReq.method.toLowerCase())) {
+        if (!['get', 'post'].includes(httpReq.method.toLowerCase())) {
           httpResp.status(405).send('unsupported ${req.method} method for rpc')
           return
         }
-        const isHead = 'head' === httpReq.method.toLowerCase()
         let rpcArgs: RpcArgs
 
         try {
@@ -67,7 +67,7 @@ export function makeExtPortsApp() {
         }
 
         try {
-          await rpcDefItem.guard(...rpcArgs)
+          rpcDefItem.guard(...rpcArgs)
         } catch (err) {
           shell.log('info', err)
           httpResp.status(400)
@@ -89,16 +89,10 @@ export function makeExtPortsApp() {
                 rpcFile.size && httpResp.header('Content-Length', `${rpcFile.size}`)
                 rpcFile.type && httpResp.contentType(`${rpcFile.type}`)
               }
-              if (isHead) {
-                return httpResp.end()
-              }
               rpcResponse.stream.pipe(httpResp)
               return
             } else {
               httpResp.contentType('application/json')
-              if (isHead) {
-                return httpResp.end()
-              }
               httpResp.json(rpcResponse.json)
               return
             }
@@ -113,7 +107,6 @@ export function makeExtPortsApp() {
                   rpcStatusCode: 500,
                   payload: err instanceof Error ? format(err) : String(err),
                 }
-            shell.log(`error`, httpReq.path, err)
             httpResp.status(rpcStatusCode).send(payload)
           })
         return srvApp
@@ -141,10 +134,10 @@ function getRpcBody(req: Request): [body: any, contentType: 'json' | 'multipart'
     : undefined
 
   if (!type) {
-    throw new TypeError(`Unsupported content-type: ${contentTypeHeader}`)
+    throw new Error(`Unsupported content-type: ${contentTypeHeader}`)
   }
 
-  if (['get', 'head'].includes(req.method.toLowerCase())) {
+  if ('get' === req.method.toLowerCase()) {
     return [undefined, type]
   }
 
@@ -212,7 +205,7 @@ function getRpcBody(req: Request): [body: any, contentType: 'json' | 'multipart'
     return [body, type]
   }
 
-  throw new TypeError(`Unsupported contentType: ${contentTypeHeader}`)
+  throw new Error(`Unsupported contentType: ${contentTypeHeader}`)
 }
 
 async function getRpcResponse(rpcResponse: any) {

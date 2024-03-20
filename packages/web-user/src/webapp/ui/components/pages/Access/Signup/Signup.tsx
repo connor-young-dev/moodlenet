@@ -1,33 +1,21 @@
-import type { Href } from '@moodlenet/component-library'
-import { Card, TertiaryButton } from '@moodlenet/component-library'
+import { CallMade as CallMadeIcon } from '@material-ui/icons'
+import { Card } from '@moodlenet/component-library'
 import type { MainFooterProps, MinimalisticHeaderProps } from '@moodlenet/react-app/ui'
-import { Link, SimpleLayout } from '@moodlenet/react-app/ui'
-import { CallMade as CallMadeIcon } from '@mui/icons-material'
-import type { ComponentType, CSSProperties, FC, PropsWithChildren } from 'react'
+import { SimpleLayout } from '@moodlenet/react-app/ui'
+import type { ComponentType, CSSProperties, FC } from 'react'
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import './Signup.scss'
 
 export type SignupFormValues = { name: string; email: string; password: string }
-export type SignupItem = {
-  Icon: ComponentType
-  Panel: ComponentType<PropsWithChildren>
-  key: string
-}
+export type SignupItem = { Icon: ComponentType; Panel: ComponentType; key: string }
 export type SignupProps = {
   signupItems: SignupItem[]
   headerProps: MinimalisticHeaderProps
   footerProps: MainFooterProps
-  loginHref: Href
-  userAgreementHref: Href
 }
 
-export const Signup: FC<SignupProps> = ({
-  headerProps,
-  signupItems,
-  footerProps,
-  loginHref,
-  userAgreementHref,
-}) => {
+export const Signup: FC<SignupProps> = ({ headerProps, signupItems, footerProps }) => {
   // const shouldShowErrors =
   //   !!form.submitCount && (!!signupErrorMessage || !form.isValid)
 
@@ -50,7 +38,7 @@ export const Signup: FC<SignupProps> = ({
         <div className={`signup-content`}>
           {/* <div className={`signup-content ${requestSent ? 'success' : ''}`}> */}
           <Card className="login-card" hover={true}>
-            <Link href={loginHref}>
+            <Link to={`/login`}>
               Log in
               <CallMadeIcon />
             </Link>
@@ -59,11 +47,7 @@ export const Signup: FC<SignupProps> = ({
             <div className="content">
               <div className="title">Sign up</div>
               {currSignupEntry ? (
-                <currSignupEntry.Panel key={currSignupEntry.key}>
-                  <Link href={userAgreementHref} target="__blank">
-                    <TertiaryButton>You agree to our Terms &amp; Conditions</TertiaryButton>
-                  </Link>
-                </currSignupEntry.Panel>
+                <currSignupEntry.Panel key={currSignupEntry.key} />
               ) : (
                 <div>No Auth available</div>
               )}
@@ -94,6 +78,7 @@ export const Signup: FC<SignupProps> = ({
                   </div>
                 </>
               )}
+
               {/* <div className="bottom">
               <div className="left"> */}
               {/* <Link href={userAgreementHref} target="__blank"> */}

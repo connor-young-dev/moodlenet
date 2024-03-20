@@ -1,25 +1,24 @@
 import { CollectionContext } from '@moodlenet/collection/webapp'
-import type { AddOnMap } from '@moodlenet/core/lib'
 import { ResourceContext } from '@moodlenet/ed-resource/webapp'
-import { createPlugin } from '@moodlenet/react-app/webapp'
+import { createHookPlugin } from '@moodlenet/react-app/webapp'
 import { useContext, useMemo } from 'react'
 import type { AddMenuItem, AddMenuProps } from '../../ui/exports/ui.mjs'
 import { AuthCtx } from '../context/AuthContext.js'
 
 export type AddMenuPluginItem = Omit<AddMenuItem, 'key'>
 
-export const AddMenuPlugins = createPlugin<{
-  menuItems: AddOnMap<AddMenuPluginItem>
-}>()
+export const AddMenuPlugins = createHookPlugin<{
+  menuItems: AddMenuPluginItem
+}>({ menuItems: null })
 
 export function useAddMenuProps(): AddMenuProps {
   const resourceCtx = useContext(ResourceContext)
   const collectionCtx = useContext(CollectionContext)
   const { isAuthenticated } = useContext(AuthCtx)
-  const plugins = AddMenuPlugins.usePluginHooks()
+  const [addons] = AddMenuPlugins.useHookPlugin()
   const menuItems = useMemo<AddMenuItem[]>(
-    () => (isAuthenticated ? plugins.getKeyedAddons('menuItems') : []),
-    [plugins, isAuthenticated],
+    () => (isAuthenticated ? addons.menuItems : []),
+    [addons.menuItems, isAuthenticated],
   )
 
   const addMenuProps = useMemo<AddMenuProps>(() => {

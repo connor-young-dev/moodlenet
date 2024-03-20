@@ -1,5 +1,4 @@
 import { mountApp } from '@moodlenet/http-server/server'
-import { getProfileHomePageRoutePath } from '@moodlenet/web-user/common'
 import { confirm } from '../lib.mjs'
 import { shell } from '../shell.mjs'
 
@@ -17,13 +16,7 @@ shell.call(mountApp)({
         res.status(400).end(confirmResp.msg)
         return
       }
-
-      res.redirect(
-        getProfileHomePageRoutePath({
-          _key: confirmResp.newProfile._key,
-          displayName: confirmResp.newProfile.displayName,
-        }),
-      )
+      res.redirect(`/`)
     })
     return app
   },

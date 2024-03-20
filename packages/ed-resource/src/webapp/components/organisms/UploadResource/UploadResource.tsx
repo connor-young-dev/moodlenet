@@ -1,41 +1,44 @@
+import { InsertDriveFile, Link as LinkIcon } from '@material-ui/icons'
 import type { AddonItem } from '@moodlenet/component-library'
 import {
-  ErrorMessage,
   getPreviewFromUrl,
   ImageContainer,
   InputTextField,
   PrimaryButton,
   RoundButton,
 } from '@moodlenet/component-library'
-import type { AssetInfo, AssetInfoForm } from '@moodlenet/component-library/common'
 import type { FormikHandle } from '@moodlenet/react-app/ui'
 import { useImageUrl } from '@moodlenet/react-app/ui'
-import { Bolt, InsertDriveFile, Link as LinkIcon, Upload as UploadIcon } from '@mui/icons-material'
 // import prettyBytes from 'pretty-bytes'
 import type { default as React, FC } from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type {
-  ResourceActions,
-  ResourceDataProps,
-  ResourceStateProps,
-} from '../../../../common/types.mjs'
-//import { ReactComponent as ExtractInfoIcon } from '../../../assets/icons/extract-info.svg'
+// import { withCtrl } from '../../../../lib/ctrl'
+// import { SelectOptions } from '../../../../lib/types'
+// import { useImageUrl } from '../../../../lib/useImageUrl'
 import { ReactComponent as UploadFileIcon } from '../../../assets/icons/upload-file.svg'
 import { ReactComponent as UploadImageIcon } from '../../../assets/icons/upload-image.svg'
-import autofillingImg from '../../../assets/img/autofilling.png'
-import uploadingFileImg from '../../../assets/img/uploading-file.png'
+
+// import InputTextField from '../../../atoms/InputTextField/InputTextField'
+// import Modal from '../../../atoms/Modal/Modal'
+// import PrimaryButton from '../../../atoms/PrimaryButton/PrimaryButton'
+// import RoundButton from '../../../atoms/RoundButton/RoundButton'
+// import SecondaryButton from '../../../atoms/SecondaryButton/SecondaryButton'
+// import { VisibilityDropdown } from '../../../atoms/VisibilityDropdown/VisibilityDropdown'
+// import { useNewResourcePageCtx } from '../NewResource'
+// import { NewResourceFormValues } from '../types'
+import type { AssetInfo, AssetInfoForm } from '@moodlenet/component-library/common'
 import './UploadResource.scss'
 
 // type SubStep = 'AddFileOrLink' | 'AddImage'
 export type UploadResourceProps = {
   fileMaxSize: number | null
-  contentForm: FormikHandle<{ content: File | string }>
+  contentForm: FormikHandle<{ content: File | string | undefined | null }>
   imageForm: FormikHandle<{ image: AssetInfoForm | undefined | null }>
+  downloadFilename: string | null
   uploadOptionsItems: (AddonItem | null)[]
-  data: ResourceDataProps
-  state: ResourceStateProps
-  actions: ResourceActions
+  contentType: 'file' | 'link' | null
   backupImage?: AssetInfo
+  uploadProgress?: number
   shouldShowErrors?: boolean
   displayOnly?: boolean
 }
@@ -46,24 +49,21 @@ export const UploadResource: FC<UploadResourceProps> = ({
 
   contentForm,
   imageForm,
-  data,
-  state,
-  actions,
+  downloadFilename,
+  contentType,
   backupImage,
 
   displayOnly,
   shouldShowErrors,
+  uploadProgress,
 }) => {
-  const { contentType, downloadFilename /* , id */ } = data
-  const { uploadProgress, autofillState /* , isUploaded  */ } = state
-  const { stopAutofill } = actions
   const [imageUrl] = useImageUrl(
     imageForm.values.image?.location,
     displayOnly ? backupImage?.location : undefined,
   )
   const credits = imageForm.values.image?.credits ?? backupImage?.credits
 
-  const contentIsFile = contentForm.values.content instanceof File || contentType === 'file'
+  const contentIsFile = contentForm.values.content instanceof File
   const contentName = downloadFilename
     ? downloadFilename
     : contentForm.values.content instanceof File
@@ -72,103 +72,50 @@ export const UploadResource: FC<UploadResourceProps> = ({
 
   const [isToDrop, setIsToDrop] = useState<boolean>(false)
 
-  const [subStep, setSubStep] = useState<
-    'AddFileOrLink' | 'Uploading' | 'Autofilling' | 'AddImage'
-  >(
-    uploadProgress !== undefined
-      ? 'Uploading'
-      : autofillState === 'ai-generation'
-      ? 'Autofilling'
-      : contentForm.values.content && !contentForm.errors.content
-      ? 'AddImage'
-      : 'AddFileOrLink',
+  const [subStep, setSubStep] = useState<'AddFileOrLink' | 'AddImage'>(
+    contentForm.values.content && !contentForm.errors.content ? 'AddImage' : 'AddFileOrLink',
   )
-  const [showContentErrors, setShowContentErrors] = useState(false)
-  const [showLinkErrors, setShowLinkErrors] = useState(false)
-  const [showImageErrors, setShowImageErrors] = useState(false)
 
-  const contentAvailable = contentForm.values.content && !contentForm.errors.content
-  const imageAvailable = imageForm.values.image && !imageForm.errors.image
-
-  const contentForm_setFieldValue = contentForm.setFieldValue
-  const contentForm_setTouched = contentForm.setTouched
-  const contentForm_validateForm = contentForm.validateForm
-  const contentForm_submitForm = contentForm.submitForm
-
-  const imageForm_setTouched = imageForm.setTouched
-  const imageForm_setFieldValue = imageForm.setFieldValue
-  const imageForm_validateForm = imageForm.validateForm
+  const contentAvailable = !!contentForm.values.content
+  const imageAvailable = !!imageForm.values.image
 
   useEffect(() => {
+    // contentForm.values.content && !contentForm.errors.content && setShouldShowErrors(false)
     setSubStep(
-      uploadProgress !== undefined
-        ? 'Uploading'
-        : autofillState === 'ai-generation'
-        ? 'Autofilling'
-        : contentForm.values.content && !contentForm.errors.content
-        ? 'AddImage'
-        : 'AddFileOrLink',
+      contentForm.values.content && !contentForm.errors.content ? 'AddImage' : 'AddFileOrLink',
     )
-  }, [contentForm, subStep, setSubStep, uploadProgress, autofillState])
-
-  useEffect(() => {
-    subStep === 'AddFileOrLink' && setShowImageErrors(false)
-  }, [subStep])
+  }, [contentForm, subStep, setSubStep])
 
   const addLinkFieldRef = useRef<HTMLInputElement>()
 
-  const setImage = useCallback(
-    (image: AssetInfoForm | undefined | null, fromContent?: boolean) => {
-      imageForm_setFieldValue('image', image).then(errors => {
-        if (fromContent && !!errors?.image) {
-          imageForm_setFieldValue('image', null)
-          return
-        }
-        setShowImageErrors(!!errors?.image)
-        imageForm_validateForm()
-        imageForm_setTouched({ image: true })
-      })
-    },
-    [imageForm_setFieldValue, imageForm_setTouched, imageForm_validateForm],
-  )
-
-  useEffect(() => {
-    subStep === 'AddFileOrLink' && imageForm.errors.image && setImage(null)
-  }, [imageForm.errors.image, imageForm.values.image, setImage, subStep])
-
-  const addLink = useCallback(() => {
-    const link = addLinkFieldRef.current?.value
-    contentForm_setFieldValue('content', link).then(errors => {
-      if (!errors?.content) {
-        contentForm_submitForm()
-      }
-      setShowLinkErrors(!!errors?.content)
-    })
-  }, [contentForm_setFieldValue, contentForm_submitForm])
+  const addLink = () => {
+    setSubStep('AddImage')
+    contentForm.setFieldValue('content', addLinkFieldRef.current?.value)
+    contentForm.setTouched({ content: true })
+    contentForm.validateForm()
+    // .then(_ => setShouldShowErrors(!!_?.content))
+    // contentForm.submitForm()
+  }
 
   const deleteImage = useCallback(() => {
-    setImage(null)
-    imageForm_setTouched({ image: true })
-    imageForm_validateForm()
-  }, [imageForm_setTouched, imageForm_validateForm, setImage])
+    imageForm.setFieldValue('image', null)
+    imageForm.setTouched({ image: true })
+    imageForm.validateForm()
+    imageForm.validateForm()
+    // imageForm.submitForm()
+  }, [imageForm])
 
-  const stopUpload = useCallback(() => {
+  const deleteFileOrLink = useCallback(() => {
+    console.log('deleting file or link')
     setSubStep('AddFileOrLink')
-    contentForm_setFieldValue('content', null).then(errors => {
-      if (!errors?.content) {
-        contentForm_submitForm()
-      }
-    })
-    contentForm_setTouched({ content: true })
-    contentForm_validateForm()
-    actions.cancelUpload()
-  }, [
-    actions,
-    contentForm_setFieldValue,
-    contentForm_setTouched,
-    contentForm_submitForm,
-    contentForm_validateForm,
-  ])
+    contentForm.setFieldValue('content', null)
+    contentForm.setTouched({ content: true })
+    contentForm.validateForm()
+    contentForm.validateForm()
+
+    // contentForm.submitForm()
+    // setShouldShowErrors(false)
+  }, [contentForm])
 
   const uploadImageRef = useRef<HTMLInputElement>(null)
   const selectImage = () => {
@@ -183,18 +130,12 @@ export const UploadResource: FC<UploadResourceProps> = ({
   const setContent = useCallback(
     (file: File | undefined) => {
       const isImage = file?.type.toLowerCase().startsWith('image')
-      contentForm_setFieldValue('content', file).then(errors => {
-        if (!errors?.content) {
-          contentForm_submitForm()
-        }
-        setShowContentErrors(!!errors?.content)
-        if (!errors?.content && file && isImage) {
-          setImage({ location: file, credits: null }, true)
-        }
-        imageForm_setTouched({ image: true })
+      contentForm.setFieldValue('content', file).then(errors => {
+        !errors?.content && file && isImage && imageForm.setFieldValue('image', file)
+        imageForm.setTouched({ image: true })
       })
     },
-    [contentForm_setFieldValue, contentForm_submitForm, imageForm_setTouched, setImage],
+    [contentForm, imageForm],
   )
 
   const contentValue =
@@ -241,13 +182,13 @@ export const UploadResource: FC<UploadResourceProps> = ({
         setContent(selectedFile)
       } else {
         if (selectedFile) {
-          setImage({ location: selectedFile, credits: null })
-          imageForm_validateForm()
-          imageForm_setTouched({ image: true })
+          imageForm.setFieldValue('image', selectedFile)
+          imageForm.setTouched({ image: true })
+          // imageForm.submitForm()
         }
       }
     },
-    [imageForm_setTouched, imageForm_validateForm, setContent, setImage, subStep],
+    [imageForm, setContent, subStep],
   )
 
   const dragOverHandler = useCallback((e: React.DragEvent<HTMLDivElement>) => {
@@ -256,6 +197,12 @@ export const UploadResource: FC<UploadResourceProps> = ({
     // Prevent default behavior (Prevent file from being opened)
     e.preventDefault()
   }, [])
+
+  const uploadImage = (file: File) => {
+    imageForm.setFieldValue('image', { location: file })
+    imageForm.setTouched({ image: true })
+    // imageForm.submitForm()
+  }
 
   const imageRef = useRef<HTMLDivElement>(null)
 
@@ -268,7 +215,7 @@ export const UploadResource: FC<UploadResourceProps> = ({
       credits={credits}
       ref={imageRef}
       deleteImage={deleteImage}
-      uploadImage={file => setImage({ location: file, credits: null })}
+      uploadImage={uploadImage}
       displayOnly={displayOnly}
       link={
         contentType === 'link' && typeof contentForm.values.content === 'string'
@@ -288,55 +235,27 @@ export const UploadResource: FC<UploadResourceProps> = ({
     />
   )
 
-  // const [uploadPartial, setUploadPartial] = useState<number | undefined>(undefined)
+  const [imageHeight, setImageHeight] = useState<string | number>('initial')
 
-  // const lastUpdateTimeRef = useRef<number | undefined>(undefined)
-  // const progressPartialRef = useRef<number | undefined>(undefined)
+  useEffect(() => {
+    const currentImageHeight = imageRef.current?.clientHeight
+    imageAvailable && contentAvailable && currentImageHeight && setImageHeight(currentImageHeight)
+  }, [imageAvailable, contentAvailable, imageRef])
 
-  // useEffect(() => {
-  //   progressPartialRef.current = uploadPartial
-  // }, [uploadPartial])
-
-  // useEffect(() => {
-  //   let interval: NodeJS.Timeout
-
-  //   if (uploadProgress !== undefined) {
-  //     const deltaTime = Date.now() - (lastUpdateTimeRef.current || Date.now())
-  //     const progressDelta = uploadProgress - (progressPartialRef.current || 0)
-
-  //     const updateRate = progressDelta / deltaTime // percentage per millisecond
-  //     interval = setInterval(() => {
-  //       if (Math.abs((progressPartialRef.current || 0) - uploadProgress) > 0.1) {
-  //         setUploadPartial(prev => (prev !== undefined ? prev + updateRate * 10 : 0))
-  //       } else {
-  //         clearInterval(interval)
-  //         setUploadPartial(uploadProgress)
-  //       }
-  //     }, 10)
-  //     lastUpdateTimeRef.current = Date.now()
-  //   } else {
-  //     setUploadPartial(undefined)
-  //   }
-
-  //   return () => {
-  //     if (interval) {
-  //       clearInterval(interval)
-  //     }
-  //   }
-  // }, [uploadProgress])
-
-  const isUploading = subStep === 'Uploading'
-  const isAutofilling = subStep === 'Autofilling'
+  const uploadedNameBackground =
+    contentIsFile && uploadProgress
+      ? `linear-gradient(to right, #1a6aff33 ${uploadProgress}% , #ffffff00 ${
+          uploadProgress + 3
+        }%, #ffffff00 )`
+      : 'none'
 
   const fileUploader = (
     <div
       className="file upload"
-      onClick={e => {
-        e.stopPropagation()
-        selectFile()
-      }}
+      onClick={selectFile}
       onKeyUp={e => e.key === 'Enter' && selectFile()}
       tabIndex={0}
+      // style={{ ...uploadHeight }}
     >
       <input
         ref={uploadFileRef}
@@ -359,32 +278,10 @@ export const UploadResource: FC<UploadResourceProps> = ({
     </div>
   )
 
-  const uploadingAnimation = (
-    <div className="uploading-animation">
-      <img
-        className="uploading-img"
-        src={uploadingFileImg}
-        alt="Uploading animation,koala on a rocket with a document flying"
-      />
-    </div>
-  )
-  const autofillingAnimation = (
-    <div className="autofilling-animation">
-      <img
-        className="autofilling-img"
-        src={autofillingImg}
-        alt="Autofilling animation, koala wearing an astronaut helmet reading a document"
-      />
-    </div>
-  )
-
   const imageUploader = (
     <div
       className="image upload"
-      onClick={e => {
-        e.stopPropagation()
-        selectImage()
-      }}
+      onClick={selectImage}
       tabIndex={0}
       onKeyUp={e => e.key === 'Enter' && selectImage()}
       // style={{ ...uploadHeight }}
@@ -398,7 +295,7 @@ export const UploadResource: FC<UploadResourceProps> = ({
         onChange={({ target }) => {
           const file = target.files?.[0]
           if (file) {
-            setImage({ location: file, credits: null })
+            uploadImage(file)
           }
         }}
         hidden
@@ -408,94 +305,63 @@ export const UploadResource: FC<UploadResourceProps> = ({
     </div>
   )
 
-  const uploader = (type: 'file' | 'image' | 'uploading' | 'autofilling') => {
-    const isLoading = type === 'uploading' || type === 'autofilling'
-    const content =
-      type === 'file'
-        ? fileUploader
-        : type === 'image'
-        ? imageUploader
-        : type === 'uploading'
-        ? uploadingAnimation
-        : type === 'autofilling'
-        ? autofillingAnimation
-        : undefined
-    const updatedUploadOptionsItems = [content, ...(uploadOptionsItems ?? [])].filter(
-      (item): item is AddonItem | JSX.Element => !!item,
-    )
+  const uploader = (type: 'file' | 'image') => {
+    const updatedUploadOptionsItems = [
+      type === 'file' ? fileUploader : imageUploader,
+      ...(uploadOptionsItems ?? []),
+    ].filter((item): item is AddonItem | JSX.Element => !!item)
 
     return [
       <>
         <div
-          className={`uploader ${isToDrop && !isLoading ? 'hover' : ''} ${
-            (shouldShowErrors || showContentErrors || showImageErrors) &&
-            (contentForm.errors.content || imageForm.errors.image)
+          className={`uploader ${isToDrop ? 'hover' : ''} ${
+            shouldShowErrors &&
+            // !(contentForm.values.content instanceof Blob) &&
+            contentForm.errors.content
               ? 'show-error'
               : ''
-          } ${subStep === 'Uploading' || subStep === 'Autofilling' ? 'no-border' : ''}
+          }
         `}
           //  ${contentForm.values.content instanceof Blob && form.errors.content ? 'error' : ''}
           id="drop_zone"
-          onClick={type === 'file' ? selectFile : type === 'image' ? selectImage : undefined}
-          onDrop={!isLoading ? dropHandler : undefined}
-          onDragOver={!isLoading ? dragOverHandler : undefined}
-          onDragLeave={!isLoading ? () => setIsToDrop(false) : undefined}
+          onClick={selectFile}
+          onDrop={dropHandler}
+          onDragOver={dragOverHandler}
+          onDragLeave={() => setIsToDrop(false)}
         >
           {updatedUploadOptionsItems.map(i => ('Item' in i ? <i.Item key={i.key} /> : i))}
         </div>
-        {showImageErrors && imageForm.errors.image && (
-          <ErrorMessage error={imageForm.errors.image} />
-        )}
       </>,
     ]
   }
 
   const uploaderDiv = (
     <>
-      {subStep === 'AddFileOrLink' && !displayOnly && uploader('file')}
-      {subStep === 'Uploading' && uploader('uploading')}
-      {subStep === 'Autofilling' && uploader('autofilling')}
-      {subStep === 'AddImage' && !displayOnly && (embed ?? (!imageAvailable && uploader('image')))}
-      {!isUploading &&
-        !isAutofilling &&
-        contentAvailable &&
-        displayOnly &&
-        (embed ?? (!imageAvailable && simpleImageContainer))}
-      {!isUploading &&
-        !isAutofilling &&
-        contentAvailable &&
-        (embed ? undefined : imageAvailable && imageContainer)}
+      {!contentAvailable && !displayOnly && uploader('file')}
+      {!contentAvailable && imageAvailable && simpleImageContainer}
+      {contentAvailable && !displayOnly && (embed ?? (!imageAvailable && uploader('image')))}
+      {contentAvailable && displayOnly && (embed ?? (!imageAvailable && simpleImageContainer))}
+      {contentAvailable && (embed ? undefined : imageAvailable && imageContainer)}
     </>
   )
 
-  // const uploadBeat =
-  //   uploadProgress !== undefined ? (
-  //     <div className="upload-beat beats">
-  //       <div className="beat" style={{ width: `${uploadPartial}%` }} />
-  //     </div>
-  //   ) : null
-
-  const uploadBeats =
-    uploadProgress !== undefined ? (
-      <div className="upload-beats beats">
-        <div className="beat beat1" />
-        <div className="beat beat2" />
-        <div className="beat beat3" />
-      </div>
-    ) : null
-
-  const autofillBeats =
-    autofillState === 'ai-generation' ? (
-      <div className="autofill-beats beats">
-        <div className="beat beat1" />
-        <div className="beat beat2" />
-        <div className="beat beat3" />
-      </div>
-    ) : null
-
   return (
     <div className="upload-resource">
-      <div className={`main-container `}>{uploaderDiv}</div>
+      <div
+        className={`main-container ${
+          imageAvailable && !contentAvailable && !displayOnly ? 'no-file-but-image' : ''
+        }`}
+        style={{
+          height:
+            imageAvailable && !contentAvailable && !displayOnly
+              ? (typeof imageHeight === 'number' && imageHeight < 250) || imageHeight === 'initial'
+                ? 250
+                : imageHeight
+              : 'fit-content',
+        }}
+      >
+        {uploaderDiv}
+      </div>
       {!displayOnly && (
         <div className="bottom-container">
           {subStep === 'AddFileOrLink' ? (
@@ -510,54 +376,30 @@ export const UploadResource: FC<UploadResourceProps> = ({
               }
               onChange={shouldShowErrors ? () => contentForm.validateField('content') : undefined}
               onKeyDown={e => e.key === 'Enter' && addLink()}
-              rightSlot={<PrimaryButton onClick={addLink}>Add</PrimaryButton>}
+              action={<PrimaryButton onClick={addLink}>Add</PrimaryButton>}
               error={
-                (shouldShowErrors || showContentErrors || showLinkErrors) &&
+                shouldShowErrors &&
+                // !(contentForm.values.content instanceof Blob) &&
                 contentForm.errors.content
               }
             />
           ) : (
-            <div className={`uploaded-name subcontainer ${contentIsFile ? 'file' : 'link'} `}>
+            <div
+              className={`uploaded-name subcontainer ${contentIsFile ? 'file' : 'link'}`}
+              style={{ background: uploadedNameBackground }}
+            >
               <div className="content-icon">
-                {uploadProgress ? (
-                  <UploadIcon /> /* : autofillState === 'extracting-info' ? (
-                  <ExtractInfoIcon />
-                ) */
-                ) : autofillState === 'ai-generation' ? (
-                  <Bolt />
-                ) : contentType === 'link' ? (
-                  <LinkIcon />
-                ) : contentType === 'file' ? (
-                  <InsertDriveFile />
-                ) : undefined}
+                {contentIsFile ? <InsertDriveFile /> : <LinkIcon />}
               </div>
               <abbr className="scroll" title={contentName}>
-                {uploadProgress
-                  ? `Uploading ${contentName}`
-                  : /* : autofillState === 'extracting-info'
-                  ? `Extracting info from ${
-                      contentType === 'file' ? contentName.split('.').pop() : 'link'
-                    }` */
-                  autofillState === 'ai-generation'
-                  ? `Autofilling with AI`
-                  : contentName}
+                {contentName}
               </abbr>
-              {uploadBeats}
-              {autofillBeats}
-              {(uploadProgress !== undefined || autofillState === 'ai-generation') && (
-                <RoundButton
-                  onClick={autofillState === 'ai-generation' ? stopAutofill : stopUpload}
-                  tabIndex={0}
-                  abbrTitle={
-                    autofillState === 'ai-generation' ? 'Cancel autofill' : 'Cancel upload'
-                  }
-                  onKeyUp={e =>
-                    e.key === 'Enter' && autofillState === 'ai-generation'
-                      ? stopAutofill
-                      : stopUpload
-                  }
-                />
-              )}
+              <RoundButton
+                onClick={deleteFileOrLink}
+                tabIndex={0}
+                abbrTitle={contentIsFile ? 'Delete file' : 'Delete link'}
+                onKeyUp={{ key: 'Enter', func: deleteFileOrLink }}
+              />
             </div>
           )}
         </div>
